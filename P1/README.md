@@ -89,8 +89,8 @@ Ejemplo de cuerpo para `POST /solicitudes`:
 
 ## Principios SOLID
 
-A continuación, la explicación de cada principio con mis propias palabras, y evidencia real tomada
-del código de este proyecto.
+Esta sección documenta cómo se aplica cada uno de los cinco principios en la implementación actual,
+con el fragmento de código correspondiente como evidencia.
 
 ### SRP — Principio de Responsabilidad Única
 
@@ -138,10 +138,10 @@ if (err instanceof DomainError) {
 }
 ```
 
-Si mañana agrego una nueva regla de negocio con su propio error (ej. una futura
+Si se agrega una nueva regla de negocio con su propio error (por ejemplo, una futura
 `PrioridadInvalidaError`), basta con crear una subclase de `DomainError` en `src/domain/errors/` —
-como ya hice con `SolicitudNotFoundError` — sin tocar una sola línea de `errorHandler.ts`. El manejador
-está *cerrado* a modificación pero *abierto* a los nuevos errores que se le sumen.
+como ya ocurre con `SolicitudNotFoundError` — sin modificar `errorHandler.ts`. El manejador queda
+*cerrado* a modificación pero *abierto* a los nuevos errores que se le sumen.
 
 ### LSP — Principio de Sustitución de Liskov
 
@@ -225,5 +225,5 @@ const controller = new SolicitudOperativaController(
 );
 ```
 
-Si el día de mañana cambiara el motor de base de datos, solo se reemplazaría esa línea en
-`app.ts` — ningún caso de uso se modificaría.
+Si el motor de base de datos cambiara en el futuro, solo se reemplazaría esa línea en `app.ts`; ningún
+caso de uso requeriría modificación.

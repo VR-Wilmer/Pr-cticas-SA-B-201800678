@@ -102,7 +102,7 @@ ya anunciada: implementar la lógica de negocio sobre ese esqueleto.
 - Se probaron los 5 endpoints end-to-end con `curl` contra Postgres real (crear, listar, actualizar
   completo, actualizar estado, eliminar), además de casos de error: `prioridad` fuera de rango (400),
   campo desconocido en el body (400, gracias a `.strict()`), id inexistente en PATCH/DELETE (404).
-- `README.md`: reescrita la sección de principios SOLID con explicación propia + fragmento de código
+- `README.md`: reescrita la sección de principios SOLID con explicación técnica, fragmento de código
   real y archivo/clase exacta por cada uno de los 5 principios; actualizado el estado del proyecto a
   "funcional" y la tabla de endpoints con los códigos de respuesta reales.
 
