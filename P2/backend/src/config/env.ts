@@ -25,4 +25,10 @@ export const env = {
   AUTHZ_SERVICE_URL: required("AUTHZ_SERVICE_URL"),
   AUTHZ_MAX_RETRIES: Number(required("AUTHZ_MAX_RETRIES")),
   AUTHZ_RETRY_BACKOFF_MS: Number(required("AUTHZ_RETRY_BACKOFF_MS")),
+  // Cuenta Admin creada automaticamente al arrancar (si no existe todavia), para
+  // poder probar la Ruta 1 (solo Admin) sin pasos manuales. Con valores por
+  // defecto pensados solo para desarrollo/pruebas locales.
+  ADMIN_NOMBRE: process.env.ADMIN_NOMBRE ?? "Administrador",
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "admin@admin.com",
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? "Admin12345",
 };

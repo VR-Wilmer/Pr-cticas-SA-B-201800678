@@ -152,4 +152,80 @@ origen que el frontend).
 
 **Ajustes aplicados por el estudiante tras la revisión:**
 
+- El usuario pidió comitear solo los archivos esenciales (sin `node_modules` ni artefactos de
+  build). Se detectaron carpetas `.pnpm-store/` (miles de archivos de caché de pnpm) y
+  `tsconfig.tsbuildinfo` que no estaban cubiertas por `.gitignore`; se agregaron esos patrones
+  (`**/.pnpm-store/`, `**/.vite/`, `**/*.tsbuildinfo`) antes de crear el commit con los 77
+  archivos de código fuente, configuración y lockfiles.
+
+---
+
+## Prompt 3 — 2026-08-06
+
+**Prompt (resumen):** el usuario pidió un manual de usuario y un manual técnico para `P2`,
+basados en la rúbrica de calificación, para poder probar la práctica en el orden más adecuado.
+
+**Respuesta (resumen de lo generado):**
+
+- `MANUAL_USUARIO.md`: pruebas paso a paso vía Postman/`curl`/navegador, cubriendo registro/login
+  con página de confirmación, JWT en cookie HTTP-only con renovación automática (incluyendo cómo
+  probarla con tiempos cortos), autorización por roles con el ciclo de reintentos del
+  microservicio, y verificación del cifrado AES directo en PostgreSQL.
+- `MANUAL_TECNICO.md`: arquitectura de los 3 servicios, variables de entorno, modelo de datos,
+  diseño detallado de JWT/AES/retry-backoff, y una tabla de referencia rápida entre
+  funcionalidades e implementación.
+
+**Ajustes aplicados por el estudiante tras la revisión:**
+
+- El usuario pidió eliminar las referencias explícitas a la rúbrica en los títulos y el cuerpo de
+  ambos manuales (ej. "Pruebas en el orden de la rúbrica", "Criterio ... (25 pts)"), dejando solo
+  títulos directos como "Pruebas". Se limpiaron todas esas menciones en ambos archivos.
+- El usuario preguntó qué credenciales usar para probar como Admin. Se corrigió el ejemplo SQL de
+  `MANUAL_USUARIO.md` (promovía a *todos* los usuarios con `WHERE correo_hash IS NOT NULL`, algo
+  confuso) para apuntar a un usuario específico por `id`, y se aclaró explícitamente que no existe
+  una cuenta Admin por defecto en ese momento — lo cual llevó directamente al Prompt 4.
+
+---
+
+## Prompt 4 — 2026-08-06
+
+**Prompt (texto real):**
+
+> necesito que exista una cuenta de admin por defecto para poder probar esto
+
+**Interpretación:** el usuario quiere una cuenta con rol Admin disponible desde el primer arranque
+del proyecto, sin tener que promover un usuario a mano por SQL cada vez, para agilizar las pruebas
+de la Ruta 1 (solo Admin).
+
+**Decisiones de diseño no preguntadas explícitamente** (documentadas en `README.md` y
+`MANUAL_TECNICO.md`): nombre/correo/contraseña de esa cuenta configurables por variable de entorno
+(`ADMIN_NOMBRE`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`) con valores por defecto pensados solo para
+desarrollo/pruebas locales (`admin@admin.com` / `Admin12345`), en vez de hardcodear credenciales
+fijas en el código.
+
+**Respuesta (resumen de lo generado):**
+
+- `backend/src/infrastructure/bootstrap/seedAdminUsuario.ts`: función idempotente que espera a
+  que PostgreSQL acepte conexiones (con reintentos, porque `depends_on` en `docker-compose.yml`
+  no garantiza que la base de datos ya esté lista) y crea la cuenta Admin solo si el correo
+  configurado todavía no existe, reutilizando `IUsuarioRepository.create` (por lo que la cuenta
+  queda cifrada con AES igual que cualquier otro usuario).
+- `backend/src/config/env.ts`: nuevas variables `ADMIN_NOMBRE`/`ADMIN_EMAIL`/`ADMIN_PASSWORD` con
+  valores por defecto (no obligatorias, a diferencia del resto de variables del proyecto).
+- `backend/src/app.ts`: `buildApp()` pasó a ser asíncrona para poder esperar el seed antes de
+  registrar las rutas; `server.ts` ajustado para `await`-earlo antes de escuchar el puerto.
+- `.env.example` y `docker-compose.yml`: variables agregadas y propagadas al contenedor del
+  backend.
+- `README.md`, `MANUAL_USUARIO.md`, `MANUAL_TECNICO.md`: documentada la cuenta Admin por defecto,
+  reemplazando la promoción manual por SQL como método principal (esa promoción se dejó como
+  alternativa para probar con más de un Admin).
+
+**Verificación realizada:** `pnpm exec tsc --noEmit` sin errores; `docker compose down -v` +
+`docker compose up -d` desde cero, confirmando en los logs del backend
+`"Cuenta Admin por defecto creada: admin@admin.com"`; login exitoso con esas credenciales y acceso
+`200 OK` a `/api/admin/panel` y `/api/dashboard`; reinicio del backend confirmando que el seed no
+duplica la cuenta (idempotencia).
+
+**Ajustes aplicados por el estudiante tras la revisión:**
+
 _(pendiente — se completa después de revisar esta iteración)_

@@ -6,6 +6,7 @@ import { AesCifradoService } from "./infrastructure/security/AesCifradoService";
 import { JwtTokenService } from "./infrastructure/security/JwtTokenService";
 import { AuthorizationServiceClient } from "./infrastructure/http/AuthorizationServiceClient";
 import { PostgresUsuarioRepository } from "./infrastructure/repositories/PostgresUsuarioRepository";
+import { seedAdminUsuario } from "./infrastructure/bootstrap/seedAdminUsuario";
 import { RegistrarUsuarioUseCase } from "./application/use-cases/RegistrarUsuarioUseCase";
 import { LoginUsuarioUseCase } from "./application/use-cases/LoginUsuarioUseCase";
 import { AuthController } from "./interfaces/http/controllers/AuthController";
@@ -18,7 +19,7 @@ import { errorHandler } from "./interfaces/http/middlewares/errorHandler";
 
 // Composition root: unico lugar donde se conectan las implementaciones concretas
 // (infraestructura) con las abstracciones que consume la capa de aplicacion (DIP).
-export function buildApp(): Application {
+export async function buildApp(): Promise<Application> {
   const app = express();
   app.use(express.json({ limit: "10kb" }));
   app.use(cookieParser());
@@ -31,6 +32,12 @@ export function buildApp(): Application {
     env.AUTHZ_RETRY_BACKOFF_MS
   );
   const usuarioRepository = new PostgresUsuarioRepository(pool, cifradoService);
+
+  await seedAdminUsuario(pool, usuarioRepository, {
+    nombre: env.ADMIN_NOMBRE,
+    correo: env.ADMIN_EMAIL,
+    contrasena: env.ADMIN_PASSWORD,
+  });
 
   const authController = new AuthController(
     new RegistrarUsuarioUseCase(usuarioRepository),

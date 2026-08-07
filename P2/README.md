@@ -77,8 +77,9 @@ importado): el backend lo consulta por red, nunca importa su codigo directamente
 
 Ver `.env.example` en la raiz de `P2/` (consumido por `docker-compose.yml`). Incluye
 `JWT_SECRET`, `JWT_EXPIRES_IN`, `JWT_REFRESH_GRACE_PERIOD`, `AES_SECRET_KEY`,
-`AUTHZ_SERVICE_URL`, `AUTHZ_MAX_RETRIES`, `AUTHZ_RETRY_BACKOFF_MS`, ademas de las credenciales
-de PostgreSQL y los puertos de cada servicio.
+`AUTHZ_SERVICE_URL`, `AUTHZ_MAX_RETRIES`, `AUTHZ_RETRY_BACKOFF_MS`, las credenciales de la cuenta
+Admin creada automaticamente al arrancar (`ADMIN_NOMBRE`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`),
+ademas de las credenciales de PostgreSQL y los puertos de cada servicio.
 
 ## Como levantar el proyecto
 
@@ -105,18 +106,20 @@ Esto levanta los 4 servicios juntos. Frontend en `http://localhost:5173`, backen
 `503` en las rutas protegidas significa que el microservicio de autorizacion no respondio tras
 agotar los reintentos configurados (`AUTHZ_MAX_RETRIES`).
 
-### Como crear un usuario Admin
+### Cuenta Admin
 
 El registro publico (`POST /auth/registro`) siempre crea usuarios con rol `cliente`: el rol no es
 auto-asignable via API, para evitar que cualquiera se otorgue permisos de administrador. Para
-promover un usuario existente a Admin (necesario para probar la Ruta 1), hay que conectarse
-directamente a la base de datos y ejecutar, usando el `id` devuelto por el registro o el login:
+poder probar la Ruta 1 sin pasos manuales, el backend crea automaticamente una cuenta Admin al
+arrancar por primera vez (si no existe todavia), con las credenciales definidas en `.env`
+(`ADMIN_NOMBRE`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`; por defecto `admin@admin.com` /
+`Admin12345`). Esto lo hace `seedAdminUsuario`
+(`backend/src/infrastructure/bootstrap/seedAdminUsuario.ts`), llamado desde el composition root
+(`app.ts`) antes de levantar el servidor; es idempotente, no crea duplicados en reinicios
+posteriores.
 
-```sql
-UPDATE usuarios SET rol = 'admin' WHERE id = '<uuid-del-usuario>';
-```
-
-Con la base de datos corriendo en Docker Compose:
+Cualquier otro usuario existente tambien puede promoverse a Admin directamente en la base de
+datos, usando el `id` devuelto por el registro o el login:
 
 ```
 docker compose exec postgres psql -U p2_user -d p2_auth_db -c "UPDATE usuarios SET rol = 'admin' WHERE id = '<uuid>';"
@@ -350,7 +353,9 @@ el motor de base de datos o la libreria de JWT, solo se reemplazarian esas linea
 
 Probado de extremo a extremo con los 4 servicios reales via `docker compose up`: registro,
 registro duplicado (409), login correcto/incorrecto, acceso Cliente/Admin a ambas rutas
-protegidas (incluyendo el 403 cuando corresponde), datos verificados como cifrados en PostgreSQL,
-renovacion automatica del JWT dentro del periodo de gracia, expiracion fuera de ese periodo, y el
-ciclo de reintentos con backoff del backend cuando `auth-service` estaba caido (respondiendo 503
-tras agotar los intentos, y recuperandose automaticamente al restablecerse el servicio).
+protegidas (incluyendo el 403 cuando corresponde), creacion automatica de la cuenta Admin al
+arrancar (y su idempotencia en reinicios posteriores), datos verificados como cifrados en
+PostgreSQL, renovacion automatica del JWT dentro del periodo de gracia, expiracion fuera de ese
+periodo, y el ciclo de reintentos con backoff del backend cuando `auth-service` estaba caido
+(respondiendo 503 tras agotar los intentos, y recuperandose automaticamente al restablecerse el
+servicio).
