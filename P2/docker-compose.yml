@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - p2_postgres_data:/var/lib/postgresql/data
+      - ./backend/src/infrastructure/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - p2-network
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      # CI=true evita que pnpm pida confirmacion interactiva (no hay TTY en el
+      # contenedor) si detecta que node_modules no coincide con el lockfile
+      # montado desde el host durante el desarrollo con bind mounts.
+      CI: "true"
+      PORT: ${AUTHZ_SERVICE_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "${AUTHZ_SERVICE_PORT}:${AUTHZ_SERVICE_PORT}"
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    networks:
+      - p2-network
+
+  backend:
+    build: ./backend
+    environment:
+      CI: "true"
+      PORT: ${BACKEND_PORT}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_GRACE_PERIOD: ${JWT_REFRESH_GRACE_PERIOD}
+      AES_SECRET_KEY: ${AES_SECRET_KEY}
+      AUTHZ_SERVICE_URL: http://auth-service:${AUTHZ_SERVICE_PORT}
+      AUTHZ_MAX_RETRIES: ${AUTHZ_MAX_RETRIES}
+      AUTHZ_RETRY_BACKOFF_MS: ${AUTHZ_RETRY_BACKOFF_MS}
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    depends_on:
+      - postgres
+      - auth-service
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - p2-network
+
+  frontend:
+    build: ./frontend
+    environment:
+      CI: "true"
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - p2-network
+
+networks:
+  p2-network:
+
+volumes:
+  p2_postgres_data:
