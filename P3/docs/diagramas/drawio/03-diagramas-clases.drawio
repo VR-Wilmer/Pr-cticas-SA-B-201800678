@@ -1,0 +1,228 @@
+<mxfile host="app.diagrams.net" agent="Practica3-SoftwareAvanzado" version="24.0.0">
+  <diagram name="Clases - Identidad y Permisos" id="cl-ms1">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" /><mxCell id="1" parent="0" />
+        <mxCell id="Usuario" value="Usuario" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="240" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="Usuario_a" value="+ id: UUID&#10;- nombreCifrado: string&#10;- correoCifrado: string&#10;+ identidadOauthSub: string&#10;+ rol: RolUsuario&#10;+ activo: boolean" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Usuario">
+          <mxGeometry y="26" width="240" height="114" as="geometry" />
+        </mxCell>
+
+        <mxCell id="RolUsuario" value="&lt;&lt;enumeration&gt;&gt;&#10;RolUsuario" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="RolUsuario_a" value="MAKER&#10;CHECKER&#10;AUTHORIZER&#10;ADMIN" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="RolUsuario">
+          <mxGeometry y="40" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="RegistroAcceso" value="RegistroAcceso" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="240" width="240" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="RegistroAcceso_a" value="+ id: UUID&#10;+ usuarioId: UUID&#10;+ accion: string&#10;+ recurso: string&#10;+ resultado: ResultadoAcceso&#10;+ timestamp: DateTime" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="RegistroAcceso">
+          <mxGeometry y="26" width="240" height="114" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ResultadoAcceso" value="&lt;&lt;enumeration&gt;&gt;&#10;ResultadoAcceso" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="240" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ResultadoAcceso_a" value="PERMITIDO&#10;DENEGADO" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="ResultadoAcceso">
+          <mxGeometry y="40" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl1e1" value="1..rol" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="Usuario" target="RolUsuario"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl1e2" value="1 : N genera" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=diamondThin;startFill=1;" edge="1" parent="1" source="Usuario" target="RegistroAcceso"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl1e3" value="1..resultado" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1" source="RegistroAcceso" target="ResultadoAcceso"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Clases - Lotes de Transacciones" id="cl-ms2">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0b" /><mxCell id="1b" parent="0b" />
+        <mxCell id="Lote" value="LoteTransacciones" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="40" y="40" width="280" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="Lote_a" value="+ id: UUID&#10;+ nombreArchivoOriginal: string&#10;+ rutaCsvS3: string&#10;+ usuarioMakerId: UUID&#10;+ usuarioCheckerId: UUID&#10;+ usuarioAuthorizerId: UUID&#10;+ estado: EstadoLote&#10;+ fechaCarga: DateTime&#10;+ totalTransacciones: int&#10;+ montoTotal: decimal" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Lote">
+          <mxGeometry y="26" width="280" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="Lote_line" style="line;strokeWidth=1;" vertex="1" parent="Lote"><mxGeometry y="176" width="280" height="8" as="geometry" /></mxCell>
+        <mxCell id="Lote_m" value="+ revisar(usuarioId, aprobar, comentario)&#10;+ autorizar(usuarioId, aprobar, comentario)" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Lote">
+          <mxGeometry y="184" width="280" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="EstadoLote" value="&lt;&lt;enumeration&gt;&gt;&#10;EstadoLote" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1b">
+          <mxGeometry x="400" y="40" width="240" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="EstadoLote_a" value="PENDIENTE_VALIDACION&#10;PENDIENTE_REVISION&#10;PENDIENTE_AUTORIZACION&#10;APROBADO&#10;RECHAZADO" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="EstadoLote">
+          <mxGeometry y="40" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Trans" value="Transaccion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="720" y="40" width="280" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="Trans_a" value="+ id: UUID&#10;+ loteId: UUID&#10;+ tipo: TipoTransaccion&#10;+ cuentaOrigen: string&#10;+ cuentaDestino: string&#10;+ monto: decimal&#10;+ beneficiarioNombre: string&#10;+ beneficiarioCorreo: string&#10;+ esValida: boolean" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Trans">
+          <mxGeometry y="26" width="280" height="174" as="geometry" />
+        </mxCell>
+
+        <mxCell id="TipoTransaccion" value="&lt;&lt;enumeration&gt;&gt;&#10;TipoTransaccion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1b">
+          <mxGeometry x="1040" y="40" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="TipoTransaccion_a" value="TRANSFERENCIA&#10;PAGO&#10;DEPOSITO" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="TipoTransaccion">
+          <mxGeometry y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Hist" value="HistorialEstadoLote" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="40" y="360" width="280" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="Hist_a" value="+ id: UUID&#10;+ loteId: UUID&#10;+ estadoAnterior: string&#10;+ estadoNuevo: string&#10;+ usuarioId: UUID&#10;+ comentario: string&#10;+ timestamp: DateTime" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Hist">
+          <mxGeometry y="26" width="280" height="124" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl2e1" value="1 : N contiene" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=diamondThin;startFill=1;" edge="1" parent="1b" source="Lote" target="Trans"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl2e2" value="1 : N registra" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=diamondThin;startFill=1;" edge="1" parent="1b" source="Lote" target="Hist"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl2e3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1b" source="Lote" target="EstadoLote"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl2e4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1b" source="Trans" target="TipoTransaccion"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Clases - Validacion y Fraude" id="cl-ms3">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0c" /><mxCell id="1c" parent="0c" />
+        <mxCell id="Regla" value="ReglaValidacion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="40" y="40" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="Regla_a" value="+ id: UUID&#10;+ nombre: string&#10;+ tipo: TipoRegla&#10;+ parametros: json&#10;+ activa: boolean" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Regla">
+          <mxGeometry y="26" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Regla_line" style="line;strokeWidth=1;" vertex="1" parent="Regla"><mxGeometry y="116" width="260" height="8" as="geometry" /></mxCell>
+        <mxCell id="Regla_m" value="+ evaluar(transaccion): ResultadoValidacion" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Regla">
+          <mxGeometry y="124" width="260" height="26" as="geometry" />
+        </mxCell>
+
+        <mxCell id="TipoRegla" value="&lt;&lt;enumeration&gt;&gt;&#10;TipoRegla" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1c">
+          <mxGeometry x="360" y="40" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="TipoRegla_a" value="SALDO_DISPONIBLE&#10;LIMITE_TRANSACCION&#10;CUENTA_VALIDA&#10;FRAUDE" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="TipoRegla">
+          <mxGeometry y="40" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ResVal" value="ResultadoValidacion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="660" y="40" width="280" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="ResVal_a" value="+ id: UUID&#10;+ loteId: UUID&#10;+ transaccionId: UUID&#10;+ reglaId: UUID&#10;+ resultado: Resultado&#10;+ detalle: string&#10;+ timestamp: DateTime" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="ResVal">
+          <mxGeometry y="26" width="280" height="144" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Resultado" value="&lt;&lt;enumeration&gt;&gt;&#10;Resultado" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1c">
+          <mxGeometry x="660" y="260" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Resultado_a" value="APROBADA&#10;RECHAZADA" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Resultado">
+          <mxGeometry y="40" width="220" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Perfil" value="PerfilRiesgoCuenta" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="40" y="260" width="260" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="Perfil_a" value="+ id: UUID&#10;+ numeroCuenta: string&#10;+ scoreRiesgo: int&#10;+ ultimaActualizacion: DateTime" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Perfil">
+          <mxGeometry y="26" width="260" height="104" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl3e1" value="1 : N produce" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=diamondThin;startFill=1;" edge="1" parent="1c" source="Regla" target="ResVal"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl3e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1c" source="Regla" target="TipoRegla"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl3e3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1c" source="ResVal" target="Resultado"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl3e4" value="consulta (ref. logica)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=open;" edge="1" parent="1c" source="Regla" target="Perfil"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Clases - Integracion Core Bancario" id="cl-ms4">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0d" /><mxCell id="1d" parent="0d" />
+        <mxCell id="Solicitud" value="SolicitudEnvioCore" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1d">
+          <mxGeometry x="40" y="40" width="280" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="Solicitud_a" value="+ id: UUID&#10;+ loteId: UUID&#10;+ estado: EstadoEnvio&#10;+ intentos: int&#10;+ fechaEnvio: DateTime&#10;+ fechaConfirmacion: DateTime&#10;+ referenciaCoreBancario: string" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Solicitud">
+          <mxGeometry y="26" width="280" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="Solicitud_line" style="line;strokeWidth=1;" vertex="1" parent="Solicitud"><mxGeometry y="154" width="280" height="8" as="geometry" /></mxCell>
+        <mxCell id="Solicitud_m" value="+ registrarIntento()&#10;+ confirmar(referencia)&#10;+ marcarError()" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Solicitud">
+          <mxGeometry y="162" width="280" height="58" as="geometry" />
+        </mxCell>
+
+        <mxCell id="EstadoEnvio" value="&lt;&lt;enumeration&gt;&gt;&#10;EstadoEnvio" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1d">
+          <mxGeometry x="400" y="40" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="EstadoEnvio_a" value="PENDIENTE&#10;ENVIADO&#10;CONFIRMADO&#10;ERROR" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="EstadoEnvio">
+          <mxGeometry y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="TransEnv" value="TransaccionEnviada" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1d">
+          <mxGeometry x="680" y="40" width="280" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="TransEnv_a" value="+ id: UUID&#10;+ solicitudEnvioId: UUID&#10;+ transaccionId: UUID&#10;+ estadoCore: EstadoCore&#10;+ codigoRespuestaCore: string&#10;+ mensajeRespuestaCore: string" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="TransEnv">
+          <mxGeometry y="26" width="280" height="144" as="geometry" />
+        </mxCell>
+
+        <mxCell id="EstadoCore" value="&lt;&lt;enumeration&gt;&gt;&#10;EstadoCore" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1d">
+          <mxGeometry x="680" y="260" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="EstadoCore_a" value="PROCESADA&#10;RECHAZADA&#10;PENDIENTE" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="EstadoCore">
+          <mxGeometry y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl4e1" value="1 : N incluye" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=diamondThin;startFill=1;" edge="1" parent="1d" source="Solicitud" target="TransEnv"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl4e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1d" source="Solicitud" target="EstadoEnvio"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl4e3" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1d" source="TransEnv" target="EstadoCore"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Clases - Notificaciones" id="cl-ms5">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0e" /><mxCell id="1e" parent="0e" />
+        <mxCell id="Notif" value="Notificacion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1e">
+          <mxGeometry x="40" y="40" width="280" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="Notif_a" value="+ id: UUID&#10;+ loteId: UUID&#10;+ destinatarioCorreo: string&#10;+ destinatarioNombre: string&#10;+ tipo: TipoNotificacion&#10;+ estadoEnvio: EstadoEnvioNotif&#10;+ fechaEnvio: DateTime&#10;+ intentos: int" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Notif">
+          <mxGeometry y="26" width="280" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="Notif_line" style="line;strokeWidth=1;" vertex="1" parent="Notif"><mxGeometry y="166" width="280" height="8" as="geometry" /></mxCell>
+        <mxCell id="Notif_m" value="+ marcarEnviada()&#10;+ marcarFallida()" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Notif">
+          <mxGeometry y="174" width="280" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="TipoNotif" value="&lt;&lt;enumeration&gt;&gt;&#10;TipoNotificacion" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1e">
+          <mxGeometry x="400" y="40" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="TipoNotif_a" value="TRANSACCION_EN_PROCESO" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="TipoNotif">
+          <mxGeometry y="40" width="220" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="EstadoEnvioNotif" value="&lt;&lt;enumeration&gt;&gt;&#10;EstadoEnvioNotif" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1e">
+          <mxGeometry x="400" y="160" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="EstadoEnvioNotif_a" value="PENDIENTE&#10;ENVIADO&#10;FALLIDO" style="text;strokeColor=inherit;fillColor=none;align=center;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="EstadoEnvioNotif">
+          <mxGeometry y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="Plantilla" value="PlantillaCorreo" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=0;collapsible=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1e">
+          <mxGeometry x="680" y="40" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="Plantilla_a" value="+ id: UUID&#10;+ tipo: string&#10;+ asunto: string&#10;+ cuerpoHtml: string" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Plantilla">
+          <mxGeometry y="26" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Plantilla_line" style="line;strokeWidth=1;" vertex="1" parent="Plantilla"><mxGeometry y="116" width="260" height="8" as="geometry" /></mxCell>
+        <mxCell id="Plantilla_m" value="+ renderizar(datos): string" style="text;strokeColor=inherit;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="Plantilla">
+          <mxGeometry y="124" width="260" height="26" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cl5e1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1e" source="Notif" target="TipoNotif"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl5e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=0;" edge="1" parent="1e" source="Notif" target="EstadoEnvioNotif"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="cl5e3" value="usa" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;" edge="1" parent="1e" source="Notif" target="Plantilla"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

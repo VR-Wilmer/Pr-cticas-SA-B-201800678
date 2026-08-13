@@ -1,0 +1,239 @@
+<mxfile host="app.diagrams.net" agent="Practica3-SoftwareAvanzado" version="24.0.0">
+  <diagram name="ER - Identidad y Permisos" id="er-ms1">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" /><mxCell id="1" parent="0" />
+        <mxCell id="usuario" value="USUARIO" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="260" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="u_r1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="30" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c1" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r1"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="54" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c2" value="nombre : string (cifrado AES)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r2"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="78" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c3" value="correo : string (cifrado AES)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r3"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="102" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c4" value="correo_hash : string (unique)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r4"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="126" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c5" value="identidad_oauth_sub : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r5"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="150" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c6" value="rol : enum(MAKER,CHECKER,AUTHORIZER,ADMIN)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r6"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_r7" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="usuario"><mxGeometry y="174" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="u_c7" value="activo : boolean" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="u_r7"><mxGeometry width="260" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="registro" value="REGISTRO_ACCESO" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="60" width="280" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="r_r1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="30" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c1" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r1"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_r2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="54" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c2" value="usuario_id : UUID (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r2"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_r3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="78" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c3" value="accion : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r3"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_r4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="102" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c4" value="recurso : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r4"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_r5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="126" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c5" value="resultado : enum(PERMITIDO,DENEGADO)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r5"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_r6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="registro"><mxGeometry y="150" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="r_c6" value="timestamp : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="r_r6"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="rel1" value="1 : N genera" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="usuario" target="registro">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="ER - Lotes de Transacciones" id="er-ms2">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0b" /><mxCell id="1b" parent="0b" />
+        <mxCell id="lote" value="LOTE_TRANSACCIONES" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="40" y="40" width="300" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l2c" value="nombre_archivo_original : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l3c" value="ruta_csv_s3 : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l4c" value="usuario_maker_id : UUID" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l5c" value="usuario_checker_id : UUID (nullable)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l6c" value="usuario_authorizer_id : UUID (nullable)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l7" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="174" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l7c" value="estado : enum(5 valores)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l7"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l8" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="198" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l8c" value="fecha_carga : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l8"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l9" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="222" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l9c" value="fecha_resolucion : datetime (nullable)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l9"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l10" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="246" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l10c" value="total_transacciones : int" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l10"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l11" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="lote"><mxGeometry y="270" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="l11c" value="monto_total : decimal" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="l11"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="trans" value="TRANSACCION" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="440" y="40" width="300" height="248" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t2c" value="lote_id : UUID (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t3c" value="tipo : enum(TRANSFERENCIA,PAGO,DEPOSITO)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t4c" value="cuenta_origen : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t5c" value="cuenta_destino : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t6c" value="monto : decimal" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t7" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="174" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t7c" value="beneficiario_nombre : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t7"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t8" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="198" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t8c" value="beneficiario_correo : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t8"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t9" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="trans"><mxGeometry y="222" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="t9c" value="es_valida : boolean / motivo_rechazo : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="t9"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="hist" value="HISTORIAL_ESTADO_LOTE" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1b">
+          <mxGeometry x="40" y="420" width="300" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h2c" value="lote_id : UUID (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h3c" value="estado_anterior / estado_nuevo : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h4c" value="usuario_id : UUID" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h5c" value="comentario : string (nullable)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="hist"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="h6c" value="timestamp : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="h6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="rel2" value="1 : N contiene" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1b" source="lote" target="trans"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel3" value="1 : N registra" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1b" source="lote" target="hist"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="ER - Validacion y Fraude" id="er-ms3">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0c" /><mxCell id="1c" parent="0c" />
+        <mxCell id="regla" value="REGLA_VALIDACION" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="40" y="40" width="280" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="rg1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="regla"><mxGeometry y="30" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rg1"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="regla"><mxGeometry y="54" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg2c" value="nombre / tipo : enum(4 valores)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rg2"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="regla"><mxGeometry y="78" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg3c" value="parametros : json" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rg3"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="regla"><mxGeometry y="102" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="rg4c" value="activa : boolean" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rg4"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="resval" value="RESULTADO_VALIDACION" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="420" y="40" width="300" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="rv1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv2c" value="lote_id : UUID (ref. logica)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv3c" value="transaccion_id : UUID (ref. logica)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv4c" value="regla_id : UUID (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv5c" value="resultado : enum(APROBADA,RECHAZADA) / detalle" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="resval"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="rv6c" value="timestamp : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="rv6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="perfil" value="PERFIL_RIESGO_CUENTA" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1c">
+          <mxGeometry x="40" y="260" width="280" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="pf1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="perfil"><mxGeometry y="30" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="pf1c" value="id : UUID (PK) / numero_cuenta : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="pf1"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="pf2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="perfil"><mxGeometry y="54" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="pf2c" value="score_riesgo : int" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="pf2"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="pf3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="perfil"><mxGeometry y="78" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="pf3c" value="ultima_actualizacion : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="pf3"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="rel4" value="1 : N aplica" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1c" source="regla" target="resval"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="ER - Integracion Core Bancario" id="er-ms4">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0d" /><mxCell id="1d" parent="0d" />
+        <mxCell id="solicitud" value="SOLICITUD_ENVIO_CORE" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1d">
+          <mxGeometry x="40" y="40" width="300" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s2c" value="lote_id : UUID (ref. logica)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s3c" value="estado : enum(PENDIENTE,ENVIADO,CONFIRMADO,ERROR)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s4c" value="intentos : int" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s5c" value="fecha_envio / fecha_confirmacion : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="solicitud"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="s6c" value="referencia_core_bancario : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="s6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="tenv" value="TRANSACCION_ENVIADA" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1d">
+          <mxGeometry x="440" y="40" width="300" height="152" as="geometry" />
+        </mxCell>
+        <mxCell id="te1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="tenv"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="te1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="tenv"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te2c" value="solicitud_envio_id : UUID (FK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="te2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="tenv"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te3c" value="transaccion_id : UUID (ref. logica)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="te3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="tenv"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te4c" value="estado_core : enum(PROCESADA,RECHAZADA,PENDIENTE)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="te4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="tenv"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="te5c" value="codigo_respuesta_core / mensaje_respuesta_core" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="te5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="rel5" value="1 : N incluye" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1d" source="solicitud" target="tenv"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="ER - Notificaciones" id="er-ms5">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0e" /><mxCell id="1e" parent="0e" />
+        <mxCell id="plantilla" value="PLANTILLA_CORREO" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1e">
+          <mxGeometry x="40" y="40" width="280" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="plantilla"><mxGeometry y="30" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="p1c" value="id : UUID (PK) / tipo : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="p1"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="p2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="plantilla"><mxGeometry y="54" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="p2c" value="asunto : string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="p2"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="p3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="plantilla"><mxGeometry y="78" width="280" height="24" as="geometry" /></mxCell>
+        <mxCell id="p3c" value="cuerpo_html : text" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="p3"><mxGeometry width="280" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="notif" value="NOTIFICACION" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1e">
+          <mxGeometry x="420" y="40" width="300" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="30" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n1c" value="id : UUID (PK)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n1"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n2" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="54" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n2c" value="lote_id : UUID (ref. logica)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n2"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n3" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="78" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n3c" value="destinatario_correo / destinatario_nombre" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n3"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n4" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="102" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n4c" value="tipo : enum(TRANSACCION_EN_PROCESO)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n4"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n5" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="126" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n5c" value="estado_envio : enum(PENDIENTE,ENVIADO,FALLIDO)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n5"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n6" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="150" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n6c" value="fecha_envio : datetime" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n6"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n7" style="shape=tableRow;horizontal=0;startSize=0;fillColor=none;" vertex="1" parent="notif"><mxGeometry y="174" width="300" height="24" as="geometry" /></mxCell>
+        <mxCell id="n7c" value="intentos : int" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;" vertex="1" parent="n7"><mxGeometry width="300" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="rel6" value="1 : N usa" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1e" source="plantilla" target="notif"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

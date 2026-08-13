@@ -1,0 +1,188 @@
+<mxfile host="app.diagrams.net" agent="Practica3-SoftwareAvanzado" version="24.0.0">
+  <diagram name="Arquitectura General" id="arch-general-page">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="ui" value="Portal Web Interno&#10;(Maker / Checker / Authorizer / Admin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="oauth" value="OAuth Corporativo (IdP)&#10;token 12h" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw" value="API Gateway (Kong)&#10;valida token OAuth, enruta, rate limiting, correlation-id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="200" y="170" width="360" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ms1" value="Identidad y Permisos&#10;(extiende auth-service P2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="20" y="320" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ms2" value="Lotes de Transacciones" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="250" y="320" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ms3" value="Validacion y Prevencion de Fraude" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="320" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ms4" value="Integracion Core Bancario" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="710" y="320" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ms5" value="Notificaciones" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="940" y="320" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s3" value="AWS S3&#10;bucket csv-lotes-transacciones" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="270" y="460" width="170" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="kafka" value="Apache Kafka&#10;lote.aprobado / lote.rechazado&#10;core.envio.completado / fallido" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="560" y="460" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="core" value="Sistema Core Bancario /&#10;Compensacion Interbancaria (externo)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="710" y="600" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="smtp" value="Proveedor de correo&#10;(SMTP / SES, externo)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="940" y="600" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="elk" value="ELK Stack (Elasticsearch + Fluent Bit + Kibana) - logging centralizado y auditable" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="740" width="740" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ui" target="oauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1l" value="1. login corporativo" style="edgeLabel;html=1;align=center;" vertex="1" connectable="0" parent="e1">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ui" target="gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2l" value="2. peticiones (Bearer token)" style="edgeLabel;html=1;align=center;" vertex="1" connectable="0" parent="e2">
+          <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <mxCell id="e3" value="REST" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="gw" target="ms1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="REST" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="gw" target="ms2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="REST (consulta estado)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" parent="1" source="gw" target="ms4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="REST (consulta estado)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" parent="1" source="gw" target="ms5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e7" value="REST sincrono&#10;(valida c/transaccion)" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ms2" target="ms3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e8" value="sube/lee CSV" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ms2" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e9" value="publica lote.aprobado /\nlote.rechazado" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ms2" target="kafka">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e10" value="consume" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="kafka" target="ms4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="consume" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="kafka" target="ms5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e12" value="envia lote aprobado" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ms4" target="core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="envia correo" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="ms5" target="smtp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="ms1" target="elk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="ms2" target="elk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="ms3" target="elk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="ms4" target="elk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="ms5" target="elk"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e19" value="logs estructurados (todos los servicios + gateway)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=none;" edge="1" parent="1" source="gw" target="elk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Diagrama de Componentes" id="componentes-page">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="c-gw" value="&lt;&lt;component&gt;&gt;&#10;API Gateway" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-oauth" value="&lt;&lt;external component&gt;&gt;&#10;OAuth Corporativo" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="800" y="40" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-ms1" value="&lt;&lt;component&gt;&gt;&#10;Identidad y Permisos" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-ms2" value="&lt;&lt;component&gt;&gt;&#10;Lotes de Transacciones" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="300" y="200" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-ms3" value="&lt;&lt;component&gt;&gt;&#10;Validacion y Prevencion de Fraude" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="560" y="200" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-ms4" value="&lt;&lt;component&gt;&gt;&#10;Integracion Core Bancario" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="200" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-ms5" value="&lt;&lt;component&gt;&gt;&#10;Notificaciones" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="200" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-kafka" value="&lt;&lt;component&gt;&gt;&#10;Kafka Broker" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="700" y="360" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-s3" value="&lt;&lt;external component&gt;&gt;&#10;AWS S3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="300" y="360" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-core" value="&lt;&lt;external component&gt;&gt;&#10;Sistema Core Bancario" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="820" y="500" width="200" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c-smtp" value="&lt;&lt;external component&gt;&gt;&#10;Proveedor SMTP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="500" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce1" value="«REST» /authorize" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-gw" target="c-ms1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce2" value="«REST» /lotes" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-gw" target="c-ms2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce3" value="«validate token»" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-gw" target="c-oauth"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce4" value="«REST» /validaciones/transaccion" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms2" target="c-ms3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce5" value="«put/get object»" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms2" target="c-s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce6" value="«publish» lote.aprobado" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms2" target="c-kafka"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce7" value="«subscribe»" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-kafka" target="c-ms4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce8" value="«subscribe»" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-kafka" target="c-ms5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce9" value="«REST» envio de lote" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms4" target="c-core"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce10" value="«SMTP» enviar correo" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms5" target="c-smtp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ce11" value="«REST» /authorize" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c-ms2" target="c-ms1"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
