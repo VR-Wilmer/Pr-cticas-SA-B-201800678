@@ -1,0 +1,45 @@
+# Contrato GraphQL de tickets-service. Requiere el header "Authorization: Bearer <token>"
+# emitido por identidad-service (POST /login) en toda query/mutation.
+
+enum CategoriaTicket {
+  SOFTWARE
+  HARDWARE
+  RED
+  CUENTA
+}
+
+enum EstadoTicket {
+  ABIERTO
+  ASIGNADO
+  EN_PROGRESO
+  RESUELTO
+  CERRADO
+}
+
+type Ticket {
+  id: ID!
+  titulo: String!
+  descripcion: String!
+  categoria: CategoriaTicket!
+  estado: EstadoTicket!
+  clienteId: ID!
+  clienteCorreo: String!
+  agenteId: ID
+  agenteNombre: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Query {
+  "CLIENTE ve solo sus tickets; AGENTE/ADMIN ven todos."
+  tickets: [Ticket!]!
+  "CLIENTE solo puede consultar sus propios tickets; AGENTE/ADMIN cualquiera."
+  ticket(id: ID!): Ticket!
+}
+
+type Mutation {
+  "Solo rol CLIENTE. Dispara asignacion de agente y notificacion automaticamente."
+  crearTicket(titulo: String!, descripcion: String!, categoria: CategoriaTicket!): Ticket!
+  "Solo rol AGENTE o ADMIN. Notifica al cliente si el nuevo estado es RESUELTO."
+  actualizarEstadoTicket(id: ID!, nuevoEstado: EstadoTicket!): Ticket!
+}

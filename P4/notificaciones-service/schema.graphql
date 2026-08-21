@@ -1,0 +1,35 @@
+# Contrato GraphQL de notificaciones-service.
+# - registrarNotificacion: uso interno, requiere el header "X-Internal-Secret"
+#   (la invoca tickets-service, no un usuario final).
+# - historialNotificaciones: uso de usuario final, requiere "Authorization: Bearer <token>"
+#   emitido por identidad-service, roles AGENTE o ADMIN.
+
+enum TipoNotificacion {
+  TICKET_CREADO
+  TICKET_ASIGNADO
+  TICKET_RESUELTO
+}
+
+enum EstadoEnvio {
+  ENVIADA
+  FALLIDA
+}
+
+type Notificacion {
+  id: ID!
+  ticketId: ID!
+  destinatario: String!
+  tipo: TipoNotificacion!
+  estadoEnvio: EstadoEnvio!
+  fechaEnvio: String!
+}
+
+type Query {
+  "Solo rol AGENTE o ADMIN."
+  historialNotificaciones(ticketId: ID!): [Notificacion!]!
+}
+
+type Mutation {
+  "Uso interno (X-Internal-Secret), llamada por tickets-service."
+  registrarNotificacion(ticketId: ID!, destinatario: String!, tipo: TipoNotificacion!): Notificacion!
+}

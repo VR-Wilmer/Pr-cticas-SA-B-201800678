@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Identidad Service - Mesa de Ayuda (P4)
+  description: >
+    Registro, login y autorizacion por roles. Extiende el patron del
+    auth-service de la Practica 2: /authorize es verify-only y lo consultan
+    los demas microservicios (nunca verifican la firma del JWT ellos mismos).
+  version: 1.0.0
+servers:
+  - url: http://localhost:4100
+    description: Directo al microservicio
+  - url: http://localhost:4000/api/identidad
+    description: A traves del API Gateway
+tags:
+  - name: Autenticacion
+  - name: Autorizacion
+paths:
+  /registro:
+    post:
+      tags: [Autenticacion]
+      summary: Registrar un usuario nuevo (siempre con rol CLIENTE)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrarRequest"
+      responses:
+        "201":
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        "400":
+          description: Datos de entrada invalidos
+        "409":
+          description: El correo ya esta registrado
+  /login:
+    post:
+      tags: [Autenticacion]
+      summary: Iniciar sesion y obtener un JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usuario:
+                    $ref: "#/components/schemas/Usuario"
+                  token:
+                    type: string
+        "401":
+          description: Credenciales invalidas
+  /authorize:
+    post:
+      tags: [Autorizacion]
+      summary: Verificar si un token tiene alguno de los roles permitidos (verify-only, sin estado)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, rolesPermitidos]
+              properties:
+                token:
+                  type: string
+                rolesPermitidos:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Rol"
+      responses:
+        "200":
+          description: >
+            Siempre 200, incluso si el token es invalido/expirado (allowed:false):
+            asi el llamador distingue "denegado" de "servicio caido" para su
+            logica de reintentos. Cuando allowed es true, tambien devuelve los
+            datos basicos del usuario (los demas microservicios nunca decodifican
+            el JWT ellos mismos).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  usuario:
+                    type: object
+                    nullable: true
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      correo:
+                        type: string
+                        format: email
+                      rol:
+                        $ref: "#/components/schemas/Rol"
+components:
+  schemas:
+    Rol:
+      type: string
+      enum: [ADMIN, AGENTE, CLIENTE]
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        rol:
+          $ref: "#/components/schemas/Rol"
+    RegistrarRequest:
+      type: object
+      required: [nombre, correo, contrasena]
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          minLength: 8
+    LoginRequest:
+      type: object
+      required: [correo, contrasena]
+      properties:
+        correo:
+          type: string
+          format: email
+        contrasena:
+          type: string

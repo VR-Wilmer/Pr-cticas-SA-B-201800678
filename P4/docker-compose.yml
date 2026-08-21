@@ -1,0 +1,191 @@
+services:
+  postgres-identidad:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_IDENTIDAD_NAME}
+    ports:
+      - "${DB_IDENTIDAD_PORT}:5432"
+    volumes:
+      - p4_postgres_identidad_data:/var/lib/postgresql/data
+      - ./identidad-service/src/infrastructure/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - p4-network
+
+  postgres-tickets:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_TICKETS_NAME}
+    ports:
+      - "${DB_TICKETS_PORT}:5432"
+    volumes:
+      - p4_postgres_tickets_data:/var/lib/postgresql/data
+      - ./tickets-service/src/infrastructure/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - p4-network
+
+  postgres-asignacion:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_ASIGNACION_NAME}
+    ports:
+      - "${DB_ASIGNACION_PORT}:5432"
+    volumes:
+      - p4_postgres_asignacion_data:/var/lib/postgresql/data
+      - ./asignacion-service/app/infrastructure/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - p4-network
+
+  postgres-notificaciones:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NOTIFICACIONES_NAME}
+    ports:
+      - "${DB_NOTIFICACIONES_PORT}:5432"
+    volumes:
+      - p4_postgres_notificaciones_data:/var/lib/postgresql/data
+      - ./notificaciones-service/src/infrastructure/database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - p4-network
+
+  identidad-service:
+    build: ./identidad-service
+    environment:
+      CI: "true"
+      PORT: ${IDENTIDAD_SERVICE_PORT}
+      DB_HOST: postgres-identidad
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_IDENTIDAD_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      ADMIN_NOMBRE: ${ADMIN_NOMBRE}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      AGENTE1_NOMBRE: ${AGENTE1_NOMBRE}
+      AGENTE1_EMAIL: ${AGENTE1_EMAIL}
+      AGENTE1_PASSWORD: ${AGENTE1_PASSWORD}
+      AGENTE2_NOMBRE: ${AGENTE2_NOMBRE}
+      AGENTE2_EMAIL: ${AGENTE2_EMAIL}
+      AGENTE2_PASSWORD: ${AGENTE2_PASSWORD}
+    ports:
+      - "${IDENTIDAD_SERVICE_PORT}:${IDENTIDAD_SERVICE_PORT}"
+    depends_on:
+      - postgres-identidad
+    volumes:
+      - ./identidad-service:/app
+      - /app/node_modules
+    networks:
+      - p4-network
+
+  tickets-service:
+    build: ./tickets-service
+    environment:
+      CI: "true"
+      PORT: ${TICKETS_SERVICE_PORT}
+      DB_HOST: postgres-tickets
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_TICKETS_NAME}
+      AUTHZ_SERVICE_URL: ${AUTHZ_SERVICE_URL}
+      AUTHZ_MAX_RETRIES: ${AUTHZ_MAX_RETRIES}
+      AUTHZ_RETRY_BACKOFF_MS: ${AUTHZ_RETRY_BACKOFF_MS}
+      ASIGNACION_SERVICE_URL: ${ASIGNACION_SERVICE_URL}
+      NOTIFICACIONES_SERVICE_URL: ${NOTIFICACIONES_SERVICE_URL}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+    ports:
+      - "${TICKETS_SERVICE_PORT}:${TICKETS_SERVICE_PORT}"
+    depends_on:
+      - postgres-tickets
+      - identidad-service
+      - asignacion-service
+      - notificaciones-service
+    volumes:
+      - ./tickets-service:/app
+      - /app/node_modules
+    networks:
+      - p4-network
+
+  asignacion-service:
+    build: ./asignacion-service
+    environment:
+      PORT: ${ASIGNACION_SERVICE_PORT}
+      DB_HOST: postgres-asignacion
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_ASIGNACION_NAME}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+    ports:
+      - "${ASIGNACION_SERVICE_PORT}:${ASIGNACION_SERVICE_PORT}"
+    depends_on:
+      - postgres-asignacion
+    volumes:
+      - ./asignacion-service:/app
+    networks:
+      - p4-network
+
+  notificaciones-service:
+    build: ./notificaciones-service
+    environment:
+      CI: "true"
+      PORT: ${NOTIFICACIONES_SERVICE_PORT}
+      DB_HOST: postgres-notificaciones
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NOTIFICACIONES_NAME}
+      AUTHZ_SERVICE_URL: ${AUTHZ_SERVICE_URL}
+      AUTHZ_MAX_RETRIES: ${AUTHZ_MAX_RETRIES}
+      AUTHZ_RETRY_BACKOFF_MS: ${AUTHZ_RETRY_BACKOFF_MS}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+    ports:
+      - "${NOTIFICACIONES_SERVICE_PORT}:${NOTIFICACIONES_SERVICE_PORT}"
+    depends_on:
+      - postgres-notificaciones
+      - identidad-service
+    volumes:
+      - ./notificaciones-service:/app
+      - /app/node_modules
+    networks:
+      - p4-network
+
+  gateway:
+    build: ./gateway
+    environment:
+      CI: "true"
+      PORT: ${GATEWAY_PORT}
+      IDENTIDAD_SERVICE_URL: http://identidad-service:${IDENTIDAD_SERVICE_PORT}
+      TICKETS_SERVICE_URL: http://tickets-service:${TICKETS_SERVICE_PORT}
+      ASIGNACION_SERVICE_URL: http://asignacion-service:${ASIGNACION_SERVICE_PORT}
+      NOTIFICACIONES_SERVICE_URL: http://notificaciones-service:${NOTIFICACIONES_SERVICE_PORT}
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    depends_on:
+      - identidad-service
+      - tickets-service
+      - asignacion-service
+      - notificaciones-service
+    volumes:
+      - ./gateway:/app
+      - /app/node_modules
+    networks:
+      - p4-network
+
+networks:
+  p4-network:
+
+volumes:
+  p4_postgres_identidad_data:
+  p4_postgres_tickets_data:
+  p4_postgres_asignacion_data:
+  p4_postgres_notificaciones_data:
