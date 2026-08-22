@@ -12,7 +12,8 @@ datos PostgreSQL.
 (`tsc --noEmit` en los 4 servicios Node, `python -m py_compile` en el servicio Python) y el flujo
 completo (registro -> login -> crear ticket -> asignacion automatica -> notificacion -> resolucion)
 esta verificado de extremo a extremo via `docker compose up`. Ver `docs/` para diagramas y detalle
-de cada microservicio.
+de cada microservicio, y [`MANUAL_USUARIO.md`](MANUAL_USUARIO.md) para instrucciones paso a paso de
+como desplegar y probar toda la practica (incluye ejemplos `curl` de cada flujo).
 
 ## Microservicios
 
@@ -31,12 +32,19 @@ seccion siguiente).
 
 ## Diagramas
 
-- [`docs/diagramas/01-arquitectura.md`](docs/diagramas/01-arquitectura.md) — comunicacion entre
-  servicios (incluye por que Tickets llama directo a Asignacion/Notificaciones).
-- [`docs/diagramas/02-despliegue.md`](docs/diagramas/02-despliegue.md) — contenedores, red, puertos
-  y volumenes de Docker Compose.
-- Diagramas ER (uno por microservicio, especifico de su base de datos): dentro del documento de
-  cada microservicio en `docs/microservicios/`, mismo criterio que P3.
+### Arquitectura — comunicación entre servicios
+
+![Diagrama de arquitectura: comunicación entre servicios](docs/diagramas/imagenes/01-arquitectura.png)
+
+### Despliegue — contenedores, red y volúmenes de Docker Compose
+
+![Diagrama de despliegue: contenedores, red y volúmenes](docs/diagramas/imagenes/02-despliegue.png)
+
+Detalle y justificación de cada diagrama: [`docs/diagramas/01-arquitectura.md`](docs/diagramas/01-arquitectura.md)
+y [`docs/diagramas/02-despliegue.md`](docs/diagramas/02-despliegue.md). Diagramas ER (uno por
+microservicio, específico de su base de datos): dentro del documento de cada microservicio en
+`docs/microservicios/`, mismo criterio que P3. Todos los diagramas son imágenes PNG renderizadas
+desde su fuente Mermaid editable (`docs/diagramas/src/*.mmd`).
 
 ## Contratos de API
 

@@ -21,17 +21,9 @@ Tickets.
 
 ## Diagrama ER
 
-```mermaid
-erDiagram
-    NOTIFICACIONES {
-        uuid id PK
-        uuid ticket_id "id del ticket en tickets-service, sin FK fisica"
-        text destinatario
-        varchar tipo "TICKET_CREADO | TICKET_ASIGNADO | TICKET_RESUELTO"
-        varchar estado_envio "ENVIADA | FALLIDA"
-        timestamptz fecha_envio
-    }
-```
+![Diagrama ER de notificaciones-service](../diagramas/imagenes/06-er-notificaciones.png)
+
+Fuente editable (Mermaid): [`../diagramas/src/06-er-notificaciones.mmd`](../diagramas/src/06-er-notificaciones.mmd).
 
 ## Notas
 

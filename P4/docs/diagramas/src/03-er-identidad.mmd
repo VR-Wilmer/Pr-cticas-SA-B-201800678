@@ -1,0 +1,8 @@
+erDiagram
+    USUARIOS {
+        uuid id PK
+        text nombre
+        text correo UK
+        text contrasena_hash "bcrypt, hash de un solo sentido"
+        varchar rol "ADMIN | AGENTE | CLIENTE"
+    }

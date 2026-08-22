@@ -24,16 +24,9 @@ servido interactivamente en `GET /docs` (directo: `http://localhost:4100/docs`; 
 
 ## Diagrama ER
 
-```mermaid
-erDiagram
-    USUARIOS {
-        uuid id PK
-        text nombre
-        text correo UK
-        text contrasena_hash "bcrypt, hash de un solo sentido"
-        varchar rol "ADMIN | AGENTE | CLIENTE"
-    }
-```
+![Diagrama ER de identidad-service](../diagramas/imagenes/03-er-identidad.png)
+
+Fuente editable (Mermaid): [`../diagramas/src/03-er-identidad.mmd`](../diagramas/src/03-er-identidad.mmd).
 
 ## Notas
 

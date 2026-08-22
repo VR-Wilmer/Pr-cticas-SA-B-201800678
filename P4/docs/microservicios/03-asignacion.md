@@ -24,16 +24,9 @@ secreto compartido simple — ver justificación completa en `README.md`.
 
 ## Diagrama ER
 
-```mermaid
-erDiagram
-    AGENTES {
-        uuid id PK
-        text nombre
-        varchar categoria "SOFTWARE | HARDWARE | RED | CUENTA"
-        integer carga_actual "numero de tickets asignados activos"
-        boolean activo
-    }
-```
+![Diagrama ER de asignacion-service](../diagramas/imagenes/05-er-asignacion.png)
+
+Fuente editable (Mermaid): [`../diagramas/src/05-er-asignacion.mmd`](../diagramas/src/05-er-asignacion.mmd).
 
 ## Notas
 

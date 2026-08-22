@@ -34,6 +34,10 @@ base de datos PostgreSQL) mas un API Gateway, todos contenedorizados y levantado
               └───────────────────────────────────────────────────┘
 ```
 
+Diagramas de arquitectura y despliegue (imagen PNG + fuente Mermaid editable):
+[`docs/diagramas/`](docs/diagramas/); diagramas ER por microservicio: dentro del documento de cada
+uno en [`docs/microservicios/`](docs/microservicios/).
+
 - **`identidad-service/`** es el unico servicio que conoce `JWT_SECRET`: firma tokens en
   `/login` y los verifica en `/authorize`. Sigue la misma arquitectura en capas de P1/P2
   (`domain` -> `application` -> `domain`, `infrastructure` implementa contratos de `domain`,
@@ -221,6 +225,9 @@ Para detener todo: `docker compose down`. Para ver logs de un servicio:
 | GraphQL en 2 servicios | `tickets-service/schema.graphql`, `notificaciones-service/schema.graphql` | Apollo Sandbox en `/graphql` de cada uno |
 | Comunicacion directa entre microservicios | `CrearTicketUseCase` -> `AsignacionServiceClient`/`NotificacionServiceClient` | Logs de `tickets-service` al crear un ticket |
 | Contrato de microservicios (Swagger/Postman) | `identidad-service/openapi.yaml`, FastAPI `/docs`, 2x `schema.graphql` | Ver seccion "Contratos de API" en `README.md` |
+
+Guia paso a paso con ejemplos `curl` de cada flujo (registro, login, crear/actualizar ticket,
+historial de notificaciones, casos de error): [`MANUAL_USUARIO.md`](MANUAL_USUARIO.md).
 
 ## 9. Notas de verificacion realizadas
 

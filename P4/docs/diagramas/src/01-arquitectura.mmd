@@ -1,0 +1,37 @@
+flowchart TB
+    Cliente["Cliente HTTP\n(Postman / curl / futuro frontend)"]
+
+    GW["API Gateway (Express)\nreverse proxy, sin logica de negocio propia"]
+
+    Cliente -->|"REST /api/identidad/*"| GW
+    Cliente -->|"GraphQL /api/tickets"| GW
+    Cliente -->|"REST /api/asignacion/*"| GW
+    Cliente -->|"GraphQL /api/notificaciones"| GW
+
+    subgraph MS["Microservicios (base de datos propia c/u)"]
+        ID["Identidad\n(Node/TS, REST)\nregistro / login / authorize"]
+        TK["Tickets\n(Node/TS, GraphQL)"]
+        AS["Asignacion de Agentes\n(Python/FastAPI, REST)"]
+        NT["Notificaciones\n(Node/TS, GraphQL)"]
+    end
+
+    GW -->|REST| ID
+    GW -->|GraphQL| TK
+    GW -->|REST| AS
+    GW -->|GraphQL| NT
+
+    TK -->|"REST POST /authorize\n(reintentos + backoff)"| ID
+    NT -->|"REST POST /authorize\n(reintentos + backoff)"| ID
+
+    TK -->|"REST POST /asignaciones\n(X-Internal-Secret)\nllamada directa, sin pasar por el Gateway"| AS
+    TK -->|"GraphQL mutation registrarNotificacion\n(X-Internal-Secret)\nllamada directa, sin pasar por el Gateway"| NT
+
+    DBID[("PostgreSQL\nidentidad")]
+    DBTK[("PostgreSQL\ntickets")]
+    DBAS[("PostgreSQL\nasignacion")]
+    DBNT[("PostgreSQL\nnotificaciones")]
+
+    ID --> DBID
+    TK --> DBTK
+    AS --> DBAS
+    NT --> DBNT

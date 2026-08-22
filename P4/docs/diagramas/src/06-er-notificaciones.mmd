@@ -1,0 +1,9 @@
+erDiagram
+    NOTIFICACIONES {
+        uuid id PK
+        uuid ticket_id "id del ticket en tickets-service, sin FK fisica"
+        text destinatario
+        varchar tipo "TICKET_CREADO | TICKET_ASIGNADO | TICKET_RESUELTO"
+        varchar estado_envio "ENVIADA | FALLIDA"
+        timestamptz fecha_envio
+    }

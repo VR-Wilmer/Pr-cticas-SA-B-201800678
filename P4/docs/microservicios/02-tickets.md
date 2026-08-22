@@ -24,22 +24,9 @@ JWT localmente.
 
 ## Diagrama ER
 
-```mermaid
-erDiagram
-    TICKETS {
-        uuid id PK
-        text titulo
-        text descripcion
-        varchar categoria "SOFTWARE | HARDWARE | RED | CUENTA"
-        varchar estado "ABIERTO | ASIGNADO | EN_PROGRESO | RESUELTO | CERRADO"
-        uuid cliente_id "id del usuario en identidad-service, sin FK fisica (servicios independientes)"
-        text cliente_correo "duplicado desde identidad-service para poder notificar sin una llamada extra"
-        uuid agente_id "nullable, id del agente en asignacion-service"
-        text agente_nombre "nullable"
-        timestamptz created_at
-        timestamptz updated_at
-    }
-```
+![Diagrama ER de tickets-service](../diagramas/imagenes/04-er-tickets.png)
+
+Fuente editable (Mermaid): [`../diagramas/src/04-er-tickets.mmd`](../diagramas/src/04-er-tickets.mmd).
 
 ## Notas
 
