@@ -59,6 +59,13 @@ Para los dos servicios REST se uso el formato pedido literalmente (Swagger/OpenA
 servicios GraphQL se uso su contrato nativo equivalente (SDL + Apollo Sandbox como documentacion
 interactiva), que cumple el mismo proposito que Swagger para una API GraphQL.
 
+Ademas, [`postman/P4-Mesa-de-Ayuda.postman_collection.json`](postman/P4-Mesa-de-Ayuda.postman_collection.json)
+(+ [`postman/P4-Local.postman_environment.json`](postman/P4-Local.postman_environment.json)) es
+una coleccion Postman completa con los 4 microservicios a traves del Gateway — 25 requests en 5
+carpetas, con captura automatica de tokens/IDs entre requests, validada de punta a punta con
+Newman (25/25 requests, 30/30 assertions). Ver la seccion "3.1 Coleccion de Postman" de
+[`MANUAL_USUARIO.md`](MANUAL_USUARIO.md) para como importarla y correrla.
+
 ## Integracion con la Practica 2
 
 La autenticacion/autorizacion de este sistema extiende directamente el `auth-service` de P2: mismo

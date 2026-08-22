@@ -224,7 +224,7 @@ Para detener todo: `docker compose down`. Para ver logs de un servicio:
 | Integracion del servicio de autenticacion de P2 | `identidad-service/` completo | `POST /api/identidad/registro` + `/login` + `/authorize` |
 | GraphQL en 2 servicios | `tickets-service/schema.graphql`, `notificaciones-service/schema.graphql` | Apollo Sandbox en `/graphql` de cada uno |
 | Comunicacion directa entre microservicios | `CrearTicketUseCase` -> `AsignacionServiceClient`/`NotificacionServiceClient` | Logs de `tickets-service` al crear un ticket |
-| Contrato de microservicios (Swagger/Postman) | `identidad-service/openapi.yaml`, FastAPI `/docs`, 2x `schema.graphql` | Ver seccion "Contratos de API" en `README.md` |
+| Contrato de microservicios (Swagger/Postman) | `identidad-service/openapi.yaml`, FastAPI `/docs`, 2x `schema.graphql`, `postman/*.json` | Ver seccion "Contratos de API" en `README.md` |
 
 Guia paso a paso con ejemplos `curl` de cada flujo (registro, login, crear/actualizar ticket,
 historial de notificaciones, casos de error): [`MANUAL_USUARIO.md`](MANUAL_USUARIO.md).

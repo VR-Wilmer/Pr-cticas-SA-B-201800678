@@ -1,0 +1,1347 @@
+{
+  "info": {
+    "_postman_id": "f4dc9ba5-4e6f-40cc-af5a-2b0fecc56b29",
+    "name": "P4 - Mesa de Ayuda (Microservicios)",
+    "description": "Coleccion completa de la Practica 4 (Software Avanzado, USAC). Cubre los 4 microservicios a traves del API Gateway (http://localhost:4000): Identidad (REST), Tickets (GraphQL), Asignacion de Agentes (REST) y Notificaciones (GraphQL). Correr las carpetas en orden (01 a 05) con el boton 'Run collection', o request por request: cada login/creacion guarda el token/id resultante en una variable de coleccion que las siguientes requests reutilizan automaticamente. Ver P4/MANUAL_USUARIO.md para el detalle de cada flujo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Identidad",
+      "description": "Registro, login y autorizacion por roles. Correr en orden: cada login guarda su token en una variable de coleccion, usada por las demas carpetas.",
+      "item": [
+        {
+          "name": "Registrar Cliente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "// Correo unico por corrida, para poder re-ejecutar la coleccion sin chocar con 409",
+                  "pm.collectionVariables.set(\"cliente_correo\", \"cliente.\" + Date.now() + \"@mesadeayuda.com\");",
+                  "})();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const data = pm.response.json();",
+                  "pm.test(\"rol es CLIENTE\", function () { pm.expect(data.rol).to.eql(\"CLIENTE\"); });",
+                  "pm.collectionVariables.set(\"cliente_id\", data.id);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/registro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "registro"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Perez\",\n  \"correo\": \"{{cliente_correo}}\",\n  \"contrasena\": \"Cliente1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar Cliente de nuevo (409 correo duplicado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"409 Conflict\", function () { pm.response.to.have.status(409); });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/registro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "registro"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Perez\",\n  \"correo\": \"{{cliente_correo}}\",\n  \"contrasena\": \"Cliente1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test(\"responde token\", function () { pm.expect(data.token).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"cliente_token\", data.token);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{cliente_correo}}\",\n  \"contrasena\": \"Cliente1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Cliente con contrasena incorrecta (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"401 Unauthorized\", function () { pm.response.to.have.status(401); });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{cliente_correo}}\",\n  \"contrasena\": \"incorrecta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set(\"admin_token\", data.token);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{admin_email}}\",\n  \"contrasena\": \"{{admin_contrasena}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Agente Software",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set(\"agente_sw_token\", data.token);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{agente_sw_email}}\",\n  \"contrasena\": \"{{agente_sw_contrasena}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Agente Hardware",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set(\"agente_hw_token\", data.token);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{agente_hw_email}}\",\n  \"contrasena\": \"{{agente_hw_contrasena}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK y status ok\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql(\"ok\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/identidad/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "identidad",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Tickets (GraphQL)",
+      "description": "Requiere haber corrido la carpeta 01 - Identidad antes (usa cliente_token/agente_hw_token). El codigo HTTP de la respuesta refleja el error real (401/403/etc, via extensions.http.status de Apollo Server), y el detalle siempre queda ademas en el campo 'errors' de la respuesta JSON.",
+      "item": [
+        {
+          "name": "Crear Ticket - Hardware (con agente disponible)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK sin errores\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const ticket = pm.response.json().data.crearTicket;",
+                  "pm.test(\"queda ASIGNADO a un agente\", function () {",
+                  "  pm.expect(ticket.estado).to.eql(\"ASIGNADO\");",
+                  "  pm.expect(ticket.agenteId).to.not.be.null;",
+                  "});",
+                  "pm.collectionVariables.set(\"ticket_id_hw\", ticket.id);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cliente_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CrearTicket($titulo: String!, $descripcion: String!, $categoria: CategoriaTicket!) {\n  crearTicket(titulo: $titulo, descripcion: $descripcion, categoria: $categoria) {\n    id\n    titulo\n    estado\n    categoria\n    clienteCorreo\n    agenteId\n    agenteNombre\n  }\n}",
+                "variables": "{\n  \"titulo\": \"No enciende la PC\",\n  \"descripcion\": \"Se apaga sola al iniciar Windows\",\n  \"categoria\": \"HARDWARE\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Ticket - Red (sin agente disponible)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK sin errores\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().errors).to.be.undefined;",
+                  "});",
+                  "const ticket = pm.response.json().data.crearTicket;",
+                  "pm.test(\"queda ABIERTO sin agente (no hay agentes sembrados para RED)\", function () {",
+                  "  pm.expect(ticket.estado).to.eql(\"ABIERTO\");",
+                  "  pm.expect(ticket.agenteId).to.be.null;",
+                  "});",
+                  "pm.collectionVariables.set(\"ticket_id_red\", ticket.id);",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cliente_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CrearTicket($titulo: String!, $descripcion: String!, $categoria: CategoriaTicket!) {\n  crearTicket(titulo: $titulo, descripcion: $descripcion, categoria: $categoria) {\n    id\n    estado\n    categoria\n    agenteId\n  }\n}",
+                "variables": "{\n  \"titulo\": \"No hay internet en la oficina\",\n  \"descripcion\": \"El router no conecta\",\n  \"categoria\": \"RED\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Tickets (Cliente ve solo los suyos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, devuelve un arreglo\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.tickets).to.be.an(\"array\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cliente_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { tickets { id titulo estado clienteCorreo } }",
+                "variables": "{}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Tickets (Agente ve todos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, devuelve un arreglo\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.tickets).to.be.an(\"array\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agente_hw_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { tickets { id titulo estado clienteCorreo agenteNombre } }",
+                "variables": "{}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Ticket por Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, id coincide\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.ticket.id).to.eql(pm.collectionVariables.get(\"ticket_id_hw\"));",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cliente_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query Ticket($id: ID!) { ticket(id: $id) { id titulo estado categoria } }",
+                "variables": "{\n  \"id\": \"{{ticket_id_hw}}\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Estado a EN_PROGRESO (Agente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, estado EN_PROGRESO\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.actualizarEstadoTicket.estado).to.eql(\"EN_PROGRESO\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agente_hw_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ActualizarEstado($id: ID!, $nuevoEstado: EstadoTicket!) {\n  actualizarEstadoTicket(id: $id, nuevoEstado: $nuevoEstado) { id estado }\n}",
+                "variables": "{\n  \"id\": \"{{ticket_id_hw}}\",\n  \"nuevoEstado\": \"EN_PROGRESO\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Estado a RESUELTO (Agente) - dispara notificacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, estado RESUELTO\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.actualizarEstadoTicket.estado).to.eql(\"RESUELTO\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agente_hw_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ActualizarEstado($id: ID!, $nuevoEstado: EstadoTicket!) {\n  actualizarEstadoTicket(id: $id, nuevoEstado: $nuevoEstado) { id estado }\n}",
+                "variables": "{\n  \"id\": \"{{ticket_id_hw}}\",\n  \"nuevoEstado\": \"RESUELTO\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Estado como Cliente (403 AccesoDenegadoError esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"403, error de autorizacion GraphQL (Apollo Server usa extensions.http.status)\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().errors[0].extensions.code).to.eql(\"AccesoDenegadoError\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cliente_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ActualizarEstado($id: ID!, $nuevoEstado: EstadoTicket!) {\n  actualizarEstadoTicket(id: $id, nuevoEstado: $nuevoEstado) { id estado }\n}",
+                "variables": "{\n  \"id\": \"{{ticket_id_red}}\",\n  \"nuevoEstado\": \"CERRADO\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Tickets sin token (401 TokenAusenteError esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"401, error de token ausente\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  const err = pm.response.json().errors[0];",
+                  "  pm.expect(err.extensions.code).to.eql(\"TokenAusenteError\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query { tickets { id } }",
+                "variables": "{}"
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Asignacion de Agentes (REST)",
+      "item": [
+        {
+          "name": "Listar Agentes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, devuelve un arreglo\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asignacion/agentes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignacion",
+                "agentes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar Agente (llamada interna directa, con secreto)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"hay un agente sembrado para SOFTWARE\", function () {",
+                  "  pm.expect(pm.response.json().agente).to.not.be.null;",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Internal-Secret",
+                "value": "{{internal_secret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignacion/asignaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignacion",
+                "asignaciones"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticket_id\": \"demo-postman\",\n  \"categoria\": \"SOFTWARE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar Agente sin X-Internal-Secret (401 esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"401 Unauthorized\", function () { pm.response.to.have.status(401); });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignacion/asignaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignacion",
+                "asignaciones"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticket_id\": \"demo-postman\",\n  \"categoria\": \"SOFTWARE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK y status ok\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql(\"ok\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/asignacion/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignacion",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Notificaciones (GraphQL)",
+      "description": "Requiere haber corrido la carpeta 02 - Tickets antes (usa ticket_id_hw).",
+      "item": [
+        {
+          "name": "Registrar Notificacion (llamada interna directa, con secreto)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK sin errores, notificacion ENVIADA\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data.registrarNotificacion.estadoEnvio).to.eql(\"ENVIADA\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Internal-Secret",
+                "value": "{{internal_secret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notificaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Registrar($ticketId: ID!, $destinatario: String!, $tipo: TipoNotificacion!) {\n  registrarNotificacion(ticketId: $ticketId, destinatario: $destinatario, tipo: $tipo) {\n    id\n    tipo\n    estadoEnvio\n  }\n}",
+                "variables": "{\n  \"ticketId\": \"{{ticket_id_hw}}\",\n  \"destinatario\": \"demo@postman.com\",\n  \"tipo\": \"TICKET_CREADO\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar Notificacion sin secreto (SecretoInternoInvalidoError esperado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"401, error de secreto invalido\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  const err = pm.response.json().errors[0];",
+                  "  pm.expect(err.extensions.code).to.eql(\"SecretoInternoInvalidoError\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notificaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Registrar($ticketId: ID!, $destinatario: String!, $tipo: TipoNotificacion!) {\n  registrarNotificacion(ticketId: $ticketId, destinatario: $destinatario, tipo: $tipo) { id }\n}",
+                "variables": "{\n  \"ticketId\": \"{{ticket_id_hw}}\",\n  \"destinatario\": \"demo@postman.com\",\n  \"tipo\": \"TICKET_CREADO\"\n}"
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Historial de Notificaciones (Agente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, hay al menos una notificacion registrada\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.historialNotificaciones.length).to.be.above(0);",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{agente_hw_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notificaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones"
+              ]
+            },
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query Historial($ticketId: ID!) {\n  historialNotificaciones(ticketId: $ticketId) { tipo destinatario estadoEnvio }\n}",
+                "variables": "{\n  \"ticketId\": \"{{ticket_id_hw}}\"\n}"
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Gateway",
+      "item": [
+        {
+          "name": "Health agregado (los 4 microservicios)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "pm.test(\"200 OK, gateway y los 4 servicios ok\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data.gateway).to.eql(\"ok\");",
+                  "  pm.expect(data.servicios.identidad).to.eql(\"ok\");",
+                  "  pm.expect(data.servicios.tickets).to.eql(\"ok\");",
+                  "  pm.expect(data.servicios.asignacion).to.eql(\"ok\");",
+                  "  pm.expect(data.servicios.notificaciones).to.eql(\"ok\");",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "internal_secret",
+      "value": "change_me_internal_secret",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@admin.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_contrasena",
+      "value": "Admin12345",
+      "type": "string"
+    },
+    {
+      "key": "agente_sw_email",
+      "value": "agente.software@mesadeayuda.com",
+      "type": "string"
+    },
+    {
+      "key": "agente_sw_contrasena",
+      "value": "Agente12345",
+      "type": "string"
+    },
+    {
+      "key": "agente_hw_email",
+      "value": "agente.hardware@mesadeayuda.com",
+      "type": "string"
+    },
+    {
+      "key": "agente_hw_contrasena",
+      "value": "Agente12345",
+      "type": "string"
+    },
+    {
+      "key": "cliente_correo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cliente_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cliente_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agente_sw_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agente_hw_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticket_id_hw",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticket_id_red",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
