@@ -10,19 +10,13 @@ Registro, login y creación de un ticket vía GraphQL (todo pasando por el
 Gateway/Ingress):
 
 ```
-$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/registro \
-    -H "Content-Type: application/json" \
-    -d '{"nombre":"Cliente Demo P5","correo":"cliente.p5@demo.com","contrasena":"ClienteP5_2026"}'
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/registro -H "Content-Type: application/json" -d '{"nombre":"Cliente Demo P5","correo":"cliente.p5@demo.com","contrasena":"ClienteP5_2026"}'
 {"id":"d400accc-eb15-4dc7-a9e1-8d1a32dbe4b4","nombre":"Cliente Demo P5","correo":"cliente.p5@demo.com","rol":"CLIENTE"}
 
-$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/login \
-    -H "Content-Type: application/json" \
-    -d '{"correo":"cliente.p5@demo.com","contrasena":"ClienteP5_2026"}'
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/login -H "Content-Type: application/json" -d '{"correo":"cliente.p5@demo.com","contrasena":"ClienteP5_2026"}'
 {"usuario":{...},"token":"eyJhbGciOiJIUzI1NiIs..."}
 
-$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets \
-    -H "Authorization: Bearer <token>" \
-    -d '{"query":"mutation { crearTicket(titulo: \"Prueba P5 async\", descripcion: \"Verificando flujo Kafka\", categoria: SOFTWARE) { id estado agenteNombre } }"}'
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets -H "Authorization: Bearer <token>" -d '{"query":"mutation { crearTicket(titulo: \"Prueba P5 async\", descripcion: \"Verificando flujo Kafka\", categoria: SOFTWARE) { id estado agenteNombre } }"}'
 {"data":{"crearTicket":{"id":"324d1e29-fe2a-42dd-9fd6-2447e4b4b371","estado":"ASIGNADO","agenteNombre":"Agente Soporte Software"}}}
 ```
 
@@ -34,8 +28,7 @@ Verificación de que el evento SI fue procesado, consultando directamente
 `notificaciones_db` (base de datos propia de `notificaciones-service`):
 
 ```
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db \
-    -c "SELECT ticket_id, destinatario, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio DESC LIMIT 3;"
+$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, destinatario, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio DESC LIMIT 3;"
 
               ticket_id               |    destinatario     |      tipo       | estado_envio |        fecha_envio
 --------------------------------------+---------------------+------------------+--------------+----------------------------
@@ -66,8 +59,7 @@ Lag del consumer group con el consumidor caído (mensajes sin procesar
 acumulados en el tópico, particiones 0/1/2):
 
 ```
-$ kubectl exec kafka-controller-0 -n sa-p5 -- kafka-consumer-groups.sh \
-    --bootstrap-server localhost:9092 --describe --group notificaciones-ticket-events
+$ kubectl exec kafka-controller-0 -n sa-p5 -- kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group notificaciones-ticket-events
 
 GROUP                         TOPIC                  PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG
 notificaciones-ticket-events  ticket-notificaciones  2          -               1               -
@@ -79,8 +71,7 @@ notificaciones-ticket-events  ticket-notificaciones  0          -               
 
 ```
 $ kubectl scale deployment notificaciones-service -n sa-p5 --replicas=1
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db \
-    -c "SELECT ticket_id, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio;"
+$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio;"
 
                ticket_id               |      tipo       | estado_envio |        fecha_envio
 --------------------------------------+------------------+--------------+----------------------------
@@ -89,8 +80,7 @@ $ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db \
  7919e65e-e703-4adc-b5e4-9fcac3de9c0c | TICKET_ASIGNADO  | ENVIADA      | 2026-08-27 18:04:01.296+00
  3929e287-bf18-47b6-ab83-5c13f261a1a6 | TICKET_ASIGNADO  | ENVIADA      | 2026-08-27 18:04:01.307+00
 
-$ kubectl exec kafka-controller-0 -n sa-p5 -- kafka-consumer-groups.sh \
-    --bootstrap-server localhost:9092 --describe --group notificaciones-ticket-events
+$ kubectl exec kafka-controller-0 -n sa-p5 -- kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group notificaciones-ticket-events
 
 GROUP                         TOPIC                  PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG
 notificaciones-ticket-events  ticket-notificaciones  0          1               1               0
@@ -105,8 +95,7 @@ perdió mientras el consumidor estuvo caído.
 ## 4. Flujo del Cronjob 2 (segundo topico, mismo patrón publicar/consumir)
 
 ```
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d platform_db \
-    -c "SELECT id, generado_en, carne, resumen FROM cronjob_resumenes;"
+$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d platform_db -c "SELECT id, generado_en, carne, resumen FROM cronjob_resumenes;"
 
                   id                  |          generado_en          |   carne   |                          resumen
 --------------------------------------+--------------------------------+-----------+-------------------------------------------------------------

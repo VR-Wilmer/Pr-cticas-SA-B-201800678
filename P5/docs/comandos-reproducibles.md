@@ -45,22 +45,15 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 helm repo update
 
-helm install ingress-nginx ingress-nginx/ingress-nginx \
-  -n ingress-nginx --create-namespace \
-  --set controller.hostPort.enabled=true \
-  --set controller.service.type=ClusterIP \
-  --set-string controller.nodeSelector."ingress-ready"="true" \
-  --set controller.tolerations[0].key="node-role.kubernetes.io/control-plane" \
-  --set controller.tolerations[0].operator="Equal" \
-  --set controller.tolerations[0].effect="NoSchedule" \
-  --wait --timeout 5m
+helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.hostPort.enabled=true --set controller.service.type=ClusterIP --set-string controller.nodeSelector."ingress-ready"="true" --set controller.tolerations[0].key="node-role.kubernetes.io/control-plane" --set controller.tolerations[0].operator="Equal" --set controller.tolerations[0].effect="NoSchedule" --wait --timeout 5m
 
-helm install metrics-server metrics-server/metrics-server \
-  -n kube-system \
-  --set args={--kubelet-insecure-tls} \
-  --wait --timeout 3m
+helm install metrics-server metrics-server/metrics-server -n kube-system --set args={--kubelet-insecure-tls} --wait --timeout 3m
 
-kubectl top nodes   # confirma que metrics-server responde
+kubectl top nodes
+# se espera una fila con el nombre del nodo (sa-p5-control-plane) y columnas
+# CPU(cores)/CPU%/MEMORY(bytes)/MEMORY% con valores numericos -- si sale
+# "error: Metrics API not available" es que metrics-server todavia no esta listo,
+# reintentar en unos segundos.
 ```
 
 `--kubelet-insecure-tls` es necesario porque los certificados del kubelet en
@@ -130,12 +123,16 @@ probar el flujo con `curl` sin tener que buscarlas.
 ## 7. Instalar la plataforma
 
 ```bash
-helm install sa-platform . -n sa-p5 --create-namespace \
-  -f values-dev.yaml -f secrets.local.yaml \
-  --timeout 8m --wait
+helm install sa-platform . -n sa-p5 --create-namespace -f values-dev.yaml -f secrets.local.yaml --timeout 8m --wait
+# se espera al final: 'Release "sa-platform" has been installed. Happy Helming!'
+# (helm no vuelve el prompt hasta que todos los recursos con --wait esten listos)
 
 kubectl get pods -n sa-p5
+# se esperan todos los pods de los 5 microservicios + postgres-0 + kafka-controller-0
+# en estado Running (READY N/N), sin reinicios
+
 helm history sa-platform -n sa-p5
+# una sola fila: REVISION 1, STATUS deployed, DESCRIPTION "Install complete"
 ```
 
 El namespace `sa-p5` lo crea el propio `helm install --create-namespace`, no
@@ -148,19 +145,18 @@ Sin modificar `/etc/hosts` (requiere admin en Windows), se usa
 
 ```bash
 curl --resolve sa-p5.local:80:127.0.0.1 http://sa-p5.local/health
+# se espera: {"gateway":"ok","servicios":{"identidad":"ok","tickets":"ok","asignacion":"ok","notificaciones":"ok"}}
 
-curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/registro \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Cliente Demo","correo":"cliente@demo.com","contrasena":"Cliente12345"}'
+curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/registro -H "Content-Type: application/json" -d '{"nombre":"Cliente Demo","correo":"cliente@demo.com","contrasena":"Cliente12345"}'
+# se espera: {"id":"<uuid>","nombre":"Cliente Demo","correo":"cliente@demo.com","rol":"CLIENTE"}
 
-curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/login \
-  -H "Content-Type: application/json" \
-  -d '{"correo":"cliente@demo.com","contrasena":"Cliente12345"}'
-# -> copiar el "token" de la respuesta
+curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/identidad/login -H "Content-Type: application/json" -d '{"correo":"cliente@demo.com","contrasena":"Cliente12345"}'
+# se espera: {"usuario":{...},"token":"<jwt>"} -> copiar el "token" de la respuesta
 
-curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets \
-  -H "Authorization: Bearer <token>" \
-  -d '{"query":"mutation { crearTicket(titulo: \"...\", descripcion: \"...\", categoria: SOFTWARE) { id estado } }"}'
+curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets -H "Content-Type: application/json" -H "Authorization: Bearer <token>" -d '{"query":"mutation { crearTicket(titulo: \"...\", descripcion: \"...\", categoria: SOFTWARE) { id estado } }"}'
+# se espera: {"data":{"crearTicket":{"id":"<uuid>","estado":"ASIGNADO"}}}
+# (queda en "ASIGNADO" porque asignacion-service encuentra agente para SOFTWARE
+# de inmediato; solo quedaria en "ABIERTO" si esa llamada fallara)
 ```
 
 ## 9. Prueba de carga (k6) contra el perfil de producción
@@ -173,13 +169,18 @@ El HPA "2 mínimo / 5 máximo" que pide el requisito F se demuestra con
 helm upgrade sa-platform . -n sa-p5 -f values-prod.yaml -f secrets.local.yaml --wait
 
 # token de un CLIENTE ya registrado, ver paso 8
-BASE_URL=http://sa-p5.local TOKEN=<token> k6 run \
-  --summary-export=P5/docs/evidencia/resumen-k6.json \
-  P5/scripts/k6/carga.js
+BASE_URL=http://sa-p5.local TOKEN=<token> k6 run --summary-export=P5/docs/evidencia/resumen-k6.json P5/scripts/k6/carga.js
+# se espera un resumen con checks al 100% (o cerca) y, si hay suficiente carga,
+# el HPA reaccionando en la otra terminal (ver abajo)
 
 # en otra terminal, mientras corre k6:
 kubectl get hpa -n sa-p5 -w
+# se espera ver REPLICAS subir de 2 hacia el maximo de values-prod.yaml (5) a
+# medida que TARGETS (uso de CPU) supera el umbral configurado
+
 kubectl get pods -n sa-p5 -w
+# se esperan nuevos pods "gateway-*"/"tickets-service-*" apareciendo en estado
+# Pending -> ContainerCreating -> Running mientras el HPA escala
 ```
 
 ## 10. Ciclo de vida de Helm (upgrade / rollback)
@@ -187,10 +188,16 @@ kubectl get pods -n sa-p5 -w
 ```bash
 # tras editar Chart.yaml (version/appVersion) y/o algun values-*.yaml:
 helm upgrade sa-platform . -n sa-p5 -f values-dev.yaml -f secrets.local.yaml --wait
+# se espera: 'Release "sa-platform" has been upgraded. Happy Helming!'
 
 helm history sa-platform -n sa-p5
+# se espera una fila nueva por cada install/upgrade/rollback, con REVISION
+# incremental y STATUS "deployed" solo en la ultima (las anteriores quedan
+# "superseded")
 
 helm rollback sa-platform <N> -n sa-p5 --wait
+# se espera: 'Rollback was a success! Happy Helming!' -- OJO: esto crea una
+# revision NUEVA en el history (no "borra" las revisiones posteriores a <N>)
 ```
 
 ## 11. Limpieza (opcional)

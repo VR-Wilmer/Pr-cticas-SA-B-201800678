@@ -11,8 +11,7 @@ $ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d tickets_db -c "SELECT co
 -------
      4
 
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d identidad_db \
-    -c "SELECT correo, rol FROM usuarios WHERE correo='cliente.p5@demo.com';"
+$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d identidad_db -c "SELECT correo, rol FROM usuarios WHERE correo='cliente.p5@demo.com';"
         correo        |   rol
 ----------------------+---------
  cliente.p5@demo.com  | CLIENTE
@@ -40,8 +39,7 @@ $ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d tickets_db -c "SELECT co
 -------
      4
 
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d identidad_db \
-    -c "SELECT correo, rol FROM usuarios WHERE correo='cliente.p5@demo.com';"
+$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d identidad_db -c "SELECT correo, rol FROM usuarios WHERE correo='cliente.p5@demo.com';"
         correo        |   rol
 ----------------------+---------
  cliente.p5@demo.com  | CLIENTE
