@@ -1,0 +1,17 @@
+# Nunca se versiona (requisito B): credenciales reales del cluster local.
+charts/sa-platform/secrets.local.yaml
+**/secrets.local.yaml
+
+# Dependencias/artefactos de build, se regeneran con pnpm install / tsc.
+node_modules/
+dist/
+.pnpm-store/
+__pycache__/
+*.pyc
+
+# Charts de terceros descargados por `helm dependency update` (no son
+# nuestro codigo, se re-descargan siempre igual desde Chart.yaml).
+charts/sa-platform/charts/postgresql
+charts/sa-platform/charts/kafka
+charts/sa-platform/charts/*.tgz
+charts/sa-platform/Chart.lock

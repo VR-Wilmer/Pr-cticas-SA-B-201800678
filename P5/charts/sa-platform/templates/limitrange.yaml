@@ -1,0 +1,25 @@
+# LimitRange (requisito F): valores por defecto para cualquier contenedor
+# del namespace que no declare requests/limits explicitos, mas cotas
+# min/max -- todos nuestros propios contenedores SI declaran resources (ver
+# charts/common/templates/_workload.tpl), este es el respaldo/limite duro.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: sa-platform-limits
+  labels:
+    {{- include "sa-platform.labels" . | nindent 4 }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: {{ .Values.limitRange.defaultRequest.cpu | quote }}
+        memory: {{ .Values.limitRange.defaultRequest.memory | quote }}
+      default:
+        cpu: {{ .Values.limitRange.default.cpu | quote }}
+        memory: {{ .Values.limitRange.default.memory | quote }}
+      max:
+        cpu: {{ .Values.limitRange.max.cpu | quote }}
+        memory: {{ .Values.limitRange.max.memory | quote }}
+      min:
+        cpu: {{ .Values.limitRange.min.cpu | quote }}
+        memory: {{ .Values.limitRange.min.memory | quote }}
