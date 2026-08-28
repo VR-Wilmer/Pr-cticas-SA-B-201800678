@@ -1,0 +1,66 @@
+# values.example.yaml: forma exacta que debe tener el archivo real de
+# credenciales (secrets.local.yaml, gitignored -- NUNCA se versiona) que se
+# pasa junto a values-dev.yaml/values-prod.yaml en el install/upgrade:
+#
+#   helm install sa-platform . -n sa-p5 --create-namespace \
+#     -f values-dev.yaml -f secrets.local.yaml
+#
+# Todos los valores de aqui son ficticios. Ninguna credencial real esta
+# escrita en este repositorio (requisito B).
+
+postgresql:
+  auth:
+    # Superuser, solo usado por primary.initdb.user/password para poder
+    # ejecutar CREATE DATABASE (el usuario de aplicacion no necesita ese
+    # privilegio en el dia a dia).
+    postgresPassword: "REEMPLAZAR_CON_PASSWORD_POSTGRES"
+    # Usuario/password de aplicacion, el mismo para las 5 bases de datos
+    # (identidad_db, tickets_db, asignacion_db, notificaciones_db,
+    # platform_db) dentro del unico Postgres compartido.
+    password: "REEMPLAZAR_CON_PASSWORD_APP"
+  primary:
+    initdb:
+      password: "REEMPLAZAR_CON_PASSWORD_POSTGRES" # igual a auth.postgresPassword
+
+identidad:
+  secret:
+    data:
+      DB_USER: "sa_app"
+      DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"
+      JWT_SECRET: "REEMPLAZAR_CON_JWT_SECRET"
+      ADMIN_PASSWORD: "REEMPLAZAR_CON_PASSWORD_ADMIN"
+      AGENTE1_PASSWORD: "REEMPLAZAR_CON_PASSWORD_AGENTE1"
+      AGENTE2_PASSWORD: "REEMPLAZAR_CON_PASSWORD_AGENTE2"
+
+tickets:
+  secret:
+    data:
+      DB_USER: "sa_app"
+      DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"
+      INTERNAL_SERVICE_SECRET: "REEMPLAZAR_CON_SECRETO_INTERNO"
+
+asignacion:
+  secret:
+    data:
+      DB_USER: "sa_app"
+      DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"
+      INTERNAL_SERVICE_SECRET: "REEMPLAZAR_CON_SECRETO_INTERNO"
+
+notificaciones:
+  secret:
+    data:
+      DB_USER: "sa_app"
+      DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"
+      INTERNAL_SERVICE_SECRET: "REEMPLAZAR_CON_SECRETO_INTERNO"
+
+cronjobs:
+  heartbeat:
+    secret:
+      data:
+        DB_USER: "sa_app"
+        DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"
+  resumen:
+    secret:
+      data:
+        DB_USER: "sa_app"
+        DB_PASSWORD: "REEMPLAZAR_CON_PASSWORD_APP"

@@ -1,0 +1,81 @@
+# values-dev.yaml: ambiente local (kind), pensado para iterar rapido con
+# pocos recursos. Uso: helm install sa-platform . -f values-dev.yaml -f secrets.local.yaml
+#
+# Difiere de values.yaml (base)/values-prod.yaml en las 4 dimensiones que
+# pide el requisito A: numero de replicas (HPA mas angosto), limites de
+# recursos (mas bajos), tag de imagen ("dev") y nivel de log ("debug").
+
+identidad:
+  image:
+    tag: "dev"
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  resources:
+    requests: { cpu: 30m, memory: 64Mi }
+    limits: { cpu: 150m, memory: 128Mi }
+  configMap:
+    data:
+      LOG_LEVEL: "debug"
+
+tickets:
+  image:
+    tag: "dev"
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  resources:
+    requests: { cpu: 30m, memory: 64Mi }
+    limits: { cpu: 150m, memory: 128Mi }
+  configMap:
+    data:
+      LOG_LEVEL: "debug"
+
+asignacion:
+  image:
+    tag: "dev"
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  resources:
+    requests: { cpu: 30m, memory: 64Mi }
+    limits: { cpu: 150m, memory: 128Mi }
+  configMap:
+    data:
+      LOG_LEVEL: "debug"
+
+notificaciones:
+  image:
+    tag: "dev"
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  resources:
+    requests: { cpu: 30m, memory: 64Mi }
+    limits: { cpu: 150m, memory: 128Mi }
+  configMap:
+    data:
+      LOG_LEVEL: "debug"
+
+gateway:
+  image:
+    tag: "dev"
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  resources:
+    requests: { cpu: 30m, memory: 48Mi }
+    limits: { cpu: 100m, memory: 96Mi }
+  configMap:
+    data:
+      # v0.2.0: bajado de "debug" a "info" -- cambio real de configuracion
+      # usado como evidencia de helm upgrade (ver docs/evidencia/04-helm-lifecycle.md).
+      LOG_LEVEL: "info"
+
+cronjobs:
+  heartbeat:
+    image:
+      tag: "dev"
+  resumen:
+    image:
+      tag: "dev"

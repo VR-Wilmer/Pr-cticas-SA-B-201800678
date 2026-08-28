@@ -1,0 +1,11 @@
+# uvicorn sin el extra "[standard]" a proposito: ese extra trae uvloop,
+# httptools, websockets, watchfiles y PyYAML -- practicos en desarrollo
+# (--reload usa watchfiles) pero innecesarios en produccion (Dockerfile ya no
+# usa --reload, y este servicio no expone websockets). Es una de las
+# optimizaciones documentadas en docs/imagenes-tamano.md.
+fastapi==0.115.0
+uvicorn==0.30.6
+sqlalchemy==2.0.34
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+pydantic==2.9.2
