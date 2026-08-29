@@ -68,6 +68,7 @@ P5/
       identidad/  tickets/  asignacion/  notificaciones/  gateway/  cronjobs/
     templates/    <- ResourceQuota, LimitRange, NetworkPolicies, Job de topicos Kafka
   scripts/k6/carga.js
+  postman/          <- coleccion de validaciones automaticas (newman/Postman)
   kind-config.yaml
   docs/
     diagramas/01-arquitectura.md

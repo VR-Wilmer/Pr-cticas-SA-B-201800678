@@ -306,6 +306,13 @@ El header `Content-Type: application/json` es obligatorio: Apollo Server
 rechaza con un error CSRF cualquier request sin ese header (o sin un header
 tipo `x-apollo-operation-name`).
 
+**Alternativa automatizada a repetir estos `curl` a mano:** la colección de
+Postman en `P5/postman/` cubre este mismo flujo (y algunos más: login como
+`ADMIN`/`AGENTE`, resolver el ticket, historial de notificaciones, listar
+agentes) con asserts en vez de comentarios, corrible con un solo comando —
+`npx newman run P5/postman/sa-platform.postman_collection.json` — ver
+`P5/postman/README.md`.
+
 ## 9. Prueba de carga (k6) contra el perfil de producción
 
 Qué hace: cambia el release al perfil `values-prod.yaml` (HPA "2 mínimo / 5

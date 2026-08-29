@@ -1,0 +1,429 @@
+{
+  "info": {
+    "name": "P5 - Validaciones API (via Ingress)",
+    "description": "Coleccion de validaciones automaticas para la plataforma sa-platform (Practica 5), equivalente a los curl de docs/comandos-reproducibles.md paso 8, pero con asserts (pm.test) en vez de comentarios \"se espera...\", y con el token/ticketId encadenados automaticamente entre requests via variables de coleccion.\n\nApunta a http://127.0.0.1 (el puerto que kind-config.yaml mapea al Ingress Controller) y fuerza el header Host: sa-p5.local en cada request (mismo truco que scripts/k6/carga.js) -- no requiere `curl --resolve` ni tocar /etc/hosts, y funciona igual en Windows/Mac/Linux.\n\nCorrer con Collection Runner (boton Run de la coleccion) o de una sola vez, sin abrir la UI, con Newman:\n  npx newman run P5/postman/sa-platform.postman_collection.json\n\nRequisitos: el cluster kind-sa-p5 arriba y el release sa-platform instalado (ver docs/comandos-reproducibles.md pasos 1-7).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Fuerza el header Host en TODAS las requests de la coleccion, para que",
+          "// NGINX Ingress enrute igual que con `curl --resolve sa-p5.local:80:127.0.0.1`,",
+          "// sin depender de resolucion DNS real de sa-p5.local.",
+          "pm.request.headers.add({ key: 'Host', value: pm.collectionVariables.get('hostHeader') });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1", "type": "string" },
+    { "key": "hostHeader", "value": "sa-p5.local", "type": "string" },
+    { "key": "clienteCorreo", "value": "", "type": "string" },
+    { "key": "clientePassword", "value": "ClientePostman12345", "type": "string" },
+    { "key": "adminCorreo", "value": "admin@admin.com", "type": "string" },
+    { "key": "adminPassword", "value": "Admin12345", "type": "string" },
+    { "key": "agenteCorreo", "value": "agente.software@mesadeayuda.com", "type": "string" },
+    { "key": "agentePassword", "value": "Agente12345", "type": "string" },
+    { "key": "tokenCliente", "value": "", "type": "string" },
+    { "key": "tokenAdmin", "value": "", "type": "string" },
+    { "key": "tokenAgente", "value": "", "type": "string" },
+    { "key": "ticketId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "GET /health (gateway agrega el de los 4 microservicios)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('gateway y los 4 servicios responden ok', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.gateway).to.eql('ok');",
+                  "  ['identidad', 'tickets', 'asignacion', 'notificaciones'].forEach(function (s) {",
+                  "    pm.expect(json.servicios[s], 'servicio ' + s).to.eql('ok');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Identidad",
+      "item": [
+        {
+          "name": "POST /api/identidad/registro (CLIENTE demo)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Correo unico por corrida (timestamp) para que la coleccion se pueda",
+                  "// re-ejecutar completa las veces que haga falta sin chocar con",
+                  "// \"correo ya registrado\" de una corrida anterior.",
+                  "if (!pm.collectionVariables.get('clienteCorreo')) {",
+                  "  pm.collectionVariables.set('clienteCorreo', 'cliente.postman.' + Date.now() + '@demo.com');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('cliente creado con rol CLIENTE', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.correo).to.eql(pm.collectionVariables.get('clienteCorreo'));",
+                  "  pm.expect(json.rol).to.eql('CLIENTE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\":\"Cliente Postman\",\"correo\":\"{{clienteCorreo}}\",\"contrasena\":\"{{clientePassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/identidad/registro",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "identidad", "registro"]
+            }
+          }
+        },
+        {
+          "name": "POST /api/identidad/login (CLIENTE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('token de CLIENTE recibido', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.usuario.rol).to.eql('CLIENTE');",
+                  "  pm.collectionVariables.set('tokenCliente', json.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"{{clienteCorreo}}\",\"contrasena\":\"{{clientePassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/identidad/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "identidad", "login"]
+            }
+          }
+        },
+        {
+          "name": "POST /api/identidad/login (ADMIN, cuenta seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('token de ADMIN recibido', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.usuario.rol).to.eql('ADMIN');",
+                  "  pm.collectionVariables.set('tokenAdmin', json.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"{{adminCorreo}}\",\"contrasena\":\"{{adminPassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/identidad/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "identidad", "login"]
+            }
+          }
+        },
+        {
+          "name": "POST /api/identidad/login (AGENTE, cuenta seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('token de AGENTE recibido', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.usuario.rol).to.eql('AGENTE');",
+                  "  pm.collectionVariables.set('tokenAgente', json.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"{{agenteCorreo}}\",\"contrasena\":\"{{agentePassword}}\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/identidad/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "identidad", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Tickets (rol CLIENTE)",
+      "item": [
+        {
+          "name": "POST /api/tickets - crearTicket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('sin errores GraphQL, ticket creado', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.errors, JSON.stringify(json.errors)).to.be.undefined;",
+                  "  pm.expect(json.data.crearTicket.id).to.be.a('string');",
+                  "  pm.expect(['ABIERTO', 'ASIGNADO']).to.include(json.data.crearTicket.estado);",
+                  "  pm.collectionVariables.set('ticketId', json.data.crearTicket.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation { crearTicket(titulo: \\\"Ticket Postman\\\", descripcion: \\\"Creado por la coleccion de validaciones\\\", categoria: SOFTWARE) { id estado } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tickets"]
+            }
+          }
+        },
+        {
+          "name": "POST /api/tickets - listar tickets del CLIENTE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 sin errores GraphQL', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.errors, JSON.stringify(json.errors)).to.be.undefined;",
+                  "  pm.expect(json.data.tickets).to.be.an('array');",
+                  "});",
+                  "pm.test('incluye el ticket recien creado', function () {",
+                  "  var json = pm.response.json();",
+                  "  var ids = json.data.tickets.map(function (t) { return t.id; });",
+                  "  pm.expect(ids).to.include(pm.collectionVariables.get('ticketId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ tickets { id titulo estado } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tickets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Tickets (rol AGENTE/ADMIN)",
+      "item": [
+        {
+          "name": "POST /api/tickets - actualizarEstadoTicket a RESUELTO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 sin errores GraphQL, queda RESUELTO', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.errors, JSON.stringify(json.errors)).to.be.undefined;",
+                  "  pm.expect(json.data.actualizarEstadoTicket.estado).to.eql('RESUELTO');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAgente}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation { actualizarEstadoTicket(id: \\\"{{ticketId}}\\\", nuevoEstado: RESUELTO) { id estado } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tickets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Notificaciones (rol AGENTE/ADMIN)",
+      "item": [
+        {
+          "name": "POST /api/notificaciones - historialNotificaciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// El consumidor de Kafka procesa el evento en paralelo (requisito D, ver",
+                  "// docs/evidencia/01-flujo-asincrono.md): justo despues de crear/resolver el",
+                  "// ticket la lista puede venir todavia vacia por el lag normal del consumer;",
+                  "// este assert solo confirma la forma de la respuesta, no la cantidad.",
+                  "pm.test('status 200 sin errores GraphQL', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.errors, JSON.stringify(json.errors)).to.be.undefined;",
+                  "  pm.expect(json.data.historialNotificaciones).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAgente}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ historialNotificaciones(ticketId: \\\"{{ticketId}}\\\") { id tipo estadoEnvio } }\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notificaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notificaciones"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Asignacion",
+      "item": [
+        {
+          "name": "GET /api/asignacion/agentes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200 y lista de agentes', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  pm.expect(json.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/asignacion/agentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "asignacion", "agentes"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
