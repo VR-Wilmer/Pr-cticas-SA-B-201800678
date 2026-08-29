@@ -13,11 +13,7 @@ Antes de correr el upgrade se lanzó un loop continuo de peticiones al
 Gateway (cada 200ms) vía el Ingress:
 
 ```
-$ for i in $(seq 1 900); do
-    code=$(curl -s --resolve sa-p5.local:80:127.0.0.1 -o /dev/null -w "%{http_code}" --max-time 2 http://sa-p5.local/health)
-    echo "$(date +%H:%M:%S.%3N) $code" >> rollout-curl.log
-    sleep 0.2
-  done
+$ for i in $(seq 1 900); do code=$(curl -s --resolve sa-p5.local:80:127.0.0.1 -o /dev/null -w "%{http_code}" --max-time 2 http://sa-p5.local/health); echo "$(date +%H:%M:%S.%3N) $code" >> rollout-curl.log; sleep 0.2; done
 ```
 
 Con el loop corriendo, se ejecutó el upgrade:
