@@ -4,6 +4,29 @@ Todo lo de este documento se ejecutó contra el clúster `kind-sa-p5` real, a
 través del Ingress (`http://sa-p5.local`, resuelto con `curl --resolve` sin
 tocar `/etc/hosts`).
 
+## 0. (una vez) Contraseña de `sa_app` para las consultas a Postgres
+
+Las consultas `psql` de este documento corren como el usuario de aplicación
+`sa_app`, cuya contraseña es la misma en las 5 bases de datos lógicas (ver
+`values.example.yaml`). `kubectl exec` sin `-it` no tiene terminal
+interactiva para que `psql` la pida, así que se pasa como variable de
+entorno (`PGPASSWORD`) leída directo del Secret real del clúster -- nunca
+hay que saberla de memoria ni copiarla a mano de `secrets.local.yaml`.
+Corré uno de los dos (según tu terminal) una vez, al principio de la sesión:
+
+**PowerShell:**
+```powershell
+$PW = kubectl get secret notificaciones-service -n sa-p5 -o jsonpath='{.data.DB_PASSWORD}' | %{[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($_))}
+```
+
+**Git Bash:**
+```bash
+PW=$(kubectl get secret notificaciones-service -n sa-p5 -o jsonpath='{.data.DB_PASSWORD}' | base64 -d)
+```
+
+El resto de los comandos `kubectl exec ... psql` de este documento asumen
+que `$PW` ya quedó seteada en la misma terminal.
+
 ## 1. Flujo normal (productor retorna de inmediato, consumidor procesa aparte)
 
 Registro, login y creación de un ticket vía GraphQL (todo pasando por el
@@ -28,7 +51,7 @@ Verificación de que el evento SI fue procesado, consultando directamente
 `notificaciones_db` (base de datos propia de `notificaciones-service`):
 
 ```
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, destinatario, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio DESC LIMIT 3;"
+$ kubectl exec postgres-0 -n sa-p5 -- env PGPASSWORD=$PW psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, destinatario, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio DESC LIMIT 3;"
 
               ticket_id               |    destinatario     |      tipo       | estado_envio |        fecha_envio
 --------------------------------------+---------------------+------------------+--------------+----------------------------
@@ -75,7 +98,7 @@ notificaciones-ticket-events  ticket-notificaciones  0          -               
 
 ```
 $ kubectl scale deployment notificaciones-service -n sa-p5 --replicas=1
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio;"
+$ kubectl exec postgres-0 -n sa-p5 -- env PGPASSWORD=$PW psql -U sa_app -d notificaciones_db -c "SELECT ticket_id, tipo, estado_envio, fecha_envio FROM notificaciones ORDER BY fecha_envio;"
 
                ticket_id               |      tipo       | estado_envio |        fecha_envio
 --------------------------------------+------------------+--------------+----------------------------
@@ -99,7 +122,7 @@ perdió mientras el consumidor estuvo caído.
 ## 4. Flujo del Cronjob 2 (segundo topico, mismo patrón publicar/consumir)
 
 ```
-$ kubectl exec postgres-0 -n sa-p5 -- psql -U sa_app -d platform_db -c "SELECT id, generado_en, carne, resumen FROM cronjob_resumenes;"
+$ kubectl exec postgres-0 -n sa-p5 -- env PGPASSWORD=$PW psql -U sa_app -d platform_db -c "SELECT id, generado_en, carne, resumen FROM cronjob_resumenes;"
 
                   id                  |          generado_en          |   carne   |                          resumen
 --------------------------------------+--------------------------------+-----------+-------------------------------------------------------------
