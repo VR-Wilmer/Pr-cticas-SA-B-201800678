@@ -49,10 +49,14 @@ productor sigue respondiendo 200 OK normalmente, porque publicar en Kafka no
 depende de que haya alguien consumiendo):
 
 ```
-$ for i in 1 2 3; do curl ... crearTicket(titulo: "Ticket backlog $i" ...); done
-{"data":{"crearTicket":{"id":"c7a9a227-...","estado":"ASIGNADO"}}}
-{"data":{"crearTicket":{"id":"3929e287-...","estado":"ASIGNADO"}}}
-{"data":{"crearTicket":{"id":"7919e65e-...","estado":"ASIGNADO"}}}
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets -H "Authorization: Bearer <token>" -d '{"query":"mutation { crearTicket(titulo: \"Ticket backlog 1\", descripcion: \"Prueba de backlog\", categoria: SOFTWARE) { id estado } }"}'
+{"data":{"crearTicket":{"id":"c7a9a227-838d-41d0-aacc-4c447348b58c","estado":"ASIGNADO"}}}
+
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets -H "Authorization: Bearer <token>" -d '{"query":"mutation { crearTicket(titulo: \"Ticket backlog 2\", descripcion: \"Prueba de backlog\", categoria: SOFTWARE) { id estado } }"}'
+{"data":{"crearTicket":{"id":"3929e287-bf18-47b6-ab83-5c13f261a1a6","estado":"ASIGNADO"}}}
+
+$ curl --resolve sa-p5.local:80:127.0.0.1 -X POST http://sa-p5.local/api/tickets -H "Authorization: Bearer <token>" -d '{"query":"mutation { crearTicket(titulo: \"Ticket backlog 3\", descripcion: \"Prueba de backlog\", categoria: SOFTWARE) { id estado } }"}'
+{"data":{"crearTicket":{"id":"7919e65e-e703-4adc-b5e4-9fcac3de9c0c","estado":"ASIGNADO"}}}
 ```
 
 Lag del consumer group con el consumidor caído (mensajes sin procesar
