@@ -1,0 +1,91 @@
+# values-gke.yaml: overlay que adapta el chart (heredado de la Practica 5,
+# probado en un cluster local `kind`) a un cluster de Kubernetes administrado
+# en la nube (GKE). Se aplica ENCIMA de values-prod.yaml:
+#
+#   helm install sa-platform . -n sa-p6 --create-namespace \
+#     -f values-prod.yaml -f values-gke.yaml -f secrets.local.yaml \
+#     --set identidad.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/identidad-service \
+#     --set tickets.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/tickets-service \
+#     --set asignacion.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/asignacion-service \
+#     --set notificaciones.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/notificaciones-service \
+#     --set gateway.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/gateway \
+#     --set cronjobs.heartbeat.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/cronjob-heartbeat \
+#     --set cronjobs.resumen.image.repository=$AR_HOST/$PROJECT_ID/sa-platform/cronjob-resumen \
+#     --set gateway.ingress.host=$INGRESS_HOST
+#
+# El repositorio de imagenes y el host del Ingress se pasan por --set (no se
+# escriben aqui) porque dependen del PROJECT_ID de cada estudiante y de la IP
+# publica que asigna el LoadBalancer -- no se conocen hasta que el cluster y
+# el Ingress Controller ya existen (ver docs/procedimiento-despliegue.md,
+# fases 3 y 5). Ver scripts/03-deploy.sh, que arma esos --set automaticamente.
+
+# ---------------------------------------------------------------------------
+# Almacenamiento persistente con la StorageClass del proveedor (alcance 5).
+# GKE crea automaticamente la StorageClass "standard-rwo" (Persistent Disk
+# balanceado, gke.io/pd.csi.storage.gke.io) y la marca como default del
+# cluster desde la version 1.24 -- el chart funcionaria igual sin este
+# override (heredaria la default), pero se fija explicitamente para dejar
+# constancia de la adaptacion real al proveedor, no un olvido.
+#
+# Nota de costos: el CSI driver de Persistent Disk redondea hacia arriba a su
+# minimo facturable (10Gi) aunque el PVC pida menos -- por eso
+# postgresql.primary.persistence.size:1Gi y kafka.controller.persistence.size:2Gi
+# terminan ocupando 10Gi cada uno en la nube. Ver docs/costos.md.
+# ---------------------------------------------------------------------------
+postgresql:
+  primary:
+    persistence:
+      storageClass: "standard-rwo"
+
+kafka:
+  controller:
+    persistence:
+      storageClass: "standard-rwo"
+
+# ---------------------------------------------------------------------------
+# HPA: se reduce el minimo de 2 (values-prod.yaml, pensado para un cluster
+# sin restriccion de cuota) a 1 replica en reposo -- el cluster real usa 2
+# nodos e2-standard-2 (2 vCPU/8GiB nominal c/u, ~1930m CPU / ~6GiB memoria
+# asignable por nodo tras el overhead fijo de los pods de sistema de GKE),
+# y correr 2 replicas minimas de los 5 servicios + Postgres + Kafka +
+# ingress-nginx desde el arranque deja menos margen del necesario. El HPA
+# sigue habilitado y sigue pudiendo escalar hasta 3 bajo carga.
+#
+# Nota real de despliegue: se probo primero con e2-small y luego e2-medium
+# (mas baratos) y ambos fallaron con "Insufficient cpu" para programar
+# ingress-nginx -- toda la familia E2 de nucleo COMPARTIDO
+# (e2-micro/e2-small/e2-medium) topa la CPU asignable en ~940m de 2 vCPU
+# nominales sin importar el tamano (verificado con `kubectl describe nodes`,
+# ~92% ya consumido solo por Calico/kube-dns/fluentbit/monitoreo antes de
+# desplegar nada propio). Se necesito e2-standard-2 (nucleo dedicado) para
+# tener CPU real utilizable -- ver docs/costos.md para el impacto en costo.
+# ---------------------------------------------------------------------------
+identidad:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+
+tickets:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+
+asignacion:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+
+notificaciones:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+
+gateway:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+  # ingress.host se completa por --set en scripts/03-deploy.sh (ver
+  # cabecera de este archivo) porque depende de la IP publica del
+  # LoadBalancer de ingress-nginx, desconocida hasta ese punto.
+  ingress:
+    className: nginx

@@ -1,0 +1,19 @@
+{
+  "name": "p5-cronjob-heartbeat",
+  "version": "1.0.0",
+  "description": "Cronjob 1 (Practica 5): inserta un registro de ejecucion en platform_db cada 2 minutos.",
+  "main": "dist/index.js",
+  "packageManager": "pnpm@11.18.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/pg": "^8.11.6",
+    "typescript": "^5.5.4"
+  }
+}
