@@ -18,6 +18,7 @@ orquestados con el chart de Helm `sa-platform`) y automatiza, en cada
 | 2 | Test | `build-test` | Corre, por servicio, pruebas **unitarias** (`node --test` / `pytest` contra fakes en memoria de sus puertos) y pruebas de **integración** (los repositorios reales contra un Postgres real levantado como `services:` del job). Sin nivel E2E — ver `docs/estrategia-de-pruebas.md` para la justificación. |
 | 3 | Dockerización + push | `docker` | Construye las 7 imágenes (5 servicios + 2 cronjobs) con Docker Buildx y las publica en Docker Hub. |
 | 4 | Deploy a Kubernetes | `deploy` | Levanta un clúster `kind` efímero *dentro del propio runner*, instala `ingress-nginx`, instala el chart completo con Helm (Postgres + Kafka + los 7 componentes propios), espera a que todo quede `Ready` y corre un smoke test end-to-end contra `/health` a través del Ingress (no directo a la ClusterIP — ver sección 2.1). |
+| 5 (extra) | Generación de versión | `release` | Solo corre cuando el push es un **tag** `p7-v*.*.*`, y solo después de que `docker` y `deploy` ya terminaron bien. Crea una **GitHub Release** — ese es el registro de la versión: queda listada en la pestaña *Releases* del repositorio, con notas y el listado de las 7 imágenes de Docker Hub que corresponden a esa versión. |
 
 Los 3 jobs corren en ese orden (`needs:`), cada uno es el *gate* del
 siguiente: si el build o los tests fallan en cualquier servicio, ni se
@@ -120,7 +121,6 @@ on:
   push:
     branches: [master]
     tags: ["p7-v*.*.*"]
-    paths: ["P6/**", "P7/**", ".github/workflows/p7-ci-cd.yml"]
   pull_request:
     branches: [master]
     paths: ["P6/**", "P7/**", ".github/workflows/p7-ci-cd.yml"]
@@ -135,12 +135,24 @@ on:
   deploy). Es lo que simula "llegó código nuevo a la rama principal,
   publícalo".
 - **Tags `p7-v*.*.*`** (ej. `p7-v1.0.0`): disparan el pipeline completo
-  igual que un push a `master`, y además `docker/metadata-action` etiqueta
-  esa imagen con el número de versión semántica (`1.0.0`), no solo con el
-  SHA del commit — así una release concreta queda identificable en Docker
-  Hub. Crear una: `git tag p7-v1.0.0 && git push origin p7-v1.0.0`.
-- **`paths:`** filtra para que un cambio en `P1`–`P5` (otras prácticas del
-  mismo repo) no dispare este pipeline innecesariamente.
+  igual que un push a `master` (build → test → docker → deploy), y además:
+  - `docker/metadata-action` etiqueta las 7 imágenes con el número de
+    versión semántica (`1.0.0`, extraído del tag con `type=match,
+    pattern=p7-v(.*),group=1` — no `type=semver`, porque ese tipo espera el
+    formato `v1.2.3` sin el prefijo `p7-`).
+  - El job `release` (etapa 5, "Generación de versión") crea una
+    **GitHub Release** con ese número — el registro formal y consultable
+    de la versión, en la pestaña *Releases* del repositorio.
+  Crear una: `git tag p7-v1.0.0 && git push origin p7-v1.0.0`.
+- **`paths:`** (solo en `pull_request`) filtra para que un cambio en
+  `P1`–`P5` (otras prácticas del mismo repo) no dispare este pipeline en un
+  PR innecesariamente. **No se usa en `push`**: un push de tag suele apuntar
+  a un commit ya existente (sin "archivos cambiados" propios), y GitHub
+  puede saltar silenciosamente un trigger de tag si el filtro de rutas no
+  encuentra coincidencias — justo el caso que necesita disparar el job
+  `release`. Se aceptó como trade-off que un push a `master` que solo toque
+  otra práctica también corra `build-test`: sin costo real, porque el repo
+  es público (minutos de Actions ilimitados).
 - **`workflow_dispatch`**: permite correrlo manualmente desde la pestaña
   *Actions* del repositorio (botón "Run workflow") — útil para generar
   evidencia bajo demanda sin tener que hacer un commit vacío.

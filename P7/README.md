@@ -7,7 +7,9 @@ dockerización + push, despliegue a Kubernetes) para el sistema de
 microservicios construido en las Prácticas 5 y 6 (`P6/`: 4 microservicios +
 API Gateway + 2 CronJobs, orquestados con Helm), **sin reescribir la
 aplicación** — el pipeline consume el código y el chart tal como quedaron
-en P6.
+en P6. Incluye además un quinto job, **generación de versión**: al pushear
+un tag `p7-v*.*.*` se crea una GitHub Release con esa versión, registrando
+formalmente qué imágenes de Docker Hub le corresponden.
 
 ## Dónde está cada cosa
 
@@ -52,6 +54,9 @@ Ver `MANUAL_TECNICO.md` — resumen: crear un Access Token de Docker Hub,
 guardarlo como los secrets `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` en
 **Settings → Secrets and variables → Actions** del repositorio, y hacer
 push a `master` (o disparar manualmente desde la pestaña *Actions*).
+
+Para generar una versión con su GitHub Release:
+`git tag p7-v1.0.0 && git push origin p7-v1.0.0`.
 
 ## Preguntas teóricas
 

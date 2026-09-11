@@ -2,17 +2,25 @@ name: P7 - CI/CD sa-platform
 
 # Disparadores (rubrica 2.4, Versionamiento):
 #   - push/PR sobre archivos de P6 o P7 -> corre siempre build+test (CI).
-#   - solo push a `master` o tags `p7-v*.*.*` -> ademas dockeriza, publica y
-#     despliega (CD). Un PR nunca publica imagenes ni toca el cluster.
+#   - push a `master` -> ademas dockeriza, publica y despliega (CD).
+#   - push de un tag `p7-v*.*.*` -> igual que master, y ADEMAS genera la
+#     version (GitHub Release) en el job "release".
+#   - Un PR nunca publica imagenes ni toca el cluster.
 #   - workflow_dispatch -> correr manualmente bajo demanda (evidencia/demo).
+#
+# El filtro "paths" de abajo NO se aplica a los tags (una sola clave "push"
+# no puede tener paths distintos por tipo de ref) -- se opto por quitarlo
+# para toda la seccion "push" en vez de arriesgar que GitHub salte
+# silenciosamente un push de tag sin "archivos cambiados" propios (un tag
+# suele apuntar a un commit ya existente). Sin costo real: el repo es
+# publico (minutos de Actions ilimitados), asi que la unica desventaja es
+# que un push a master que solo toque otra practica (P1-P5) tambien
+# disparara build-test -- aceptable frente al riesgo de romper el
+# versionamiento por tag.
 on:
   push:
     branches: [master]
     tags: ["p7-v*.*.*"]
-    paths:
-      - "P6/**"
-      - "P7/**"
-      - ".github/workflows/p7-ci-cd.yml"
   pull_request:
     branches: [master]
     paths:
@@ -191,9 +199,13 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+          # El tag semantico usa "p7-v1.2.3" (prefijo por practica, para no
+          # chocar con tags de otras practicas en este mismo repo), no el
+          # "v1.2.3" que "type=semver" espera por defecto -- por eso se usa
+          # "type=match" con una captura de grupo en vez de "type=semver".
           tags: |
             type=ref,event=branch
-            type=semver,pattern={{version}}
+            type=match,pattern=p7-v(.*),group=1
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=ci-${{ github.sha }}
 
@@ -396,3 +408,42 @@ jobs:
           kubectl get all -n "$NAMESPACE"
           kubectl describe pods -n "$NAMESPACE"
           kubectl logs -l app.kubernetes.io/part-of=sa-platform -n "$NAMESPACE" --all-containers --tail=200 || true
+
+  # ---------------------------------------------------------------------
+  # Job de "Generacion de version": solo corre cuando el push es un tag
+  # p7-v*.*.* (ej. p7-v1.0.0), y solo despues de que docker+deploy ya
+  # terminaron bien -- una version no se "genera" hasta que las imagenes
+  # estan publicadas Y el despliegue automatico las probo de verdad. El
+  # registro de esa version es la propia GitHub Release que este job crea:
+  # queda listada en la pestana "Releases" del repositorio, con las 7
+  # imagenes de Docker Hub que le corresponden a ese numero de version.
+  # ---------------------------------------------------------------------
+  release:
+    name: Generar version (GitHub Release)
+    needs: [docker, deploy]
+    if: startsWith(github.ref, 'refs/tags/p7-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Crear GitHub Release para esta version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#p7-v}"
+          IMAGENES=""
+          for svc in identidad-service tickets-service asignacion-service notificaciones-service gateway cronjob-heartbeat cronjob-resumen; do
+            IMAGENES="${IMAGENES}- \`docker.io/${DOCKERHUB_USERNAME}/sa-platform-${svc}:${VERSION}\`"$'\n'
+          done
+          gh release create "$GITHUB_REF_NAME" \
+            --title "P7 v${VERSION}" \
+            --generate-notes \
+            --notes "Version ${VERSION} del pipeline CI/CD de sa-platform. Desplegada y verificada automaticamente (smoke test /health) contra un cluster kind efimero en esta misma corrida (ver job deploy). Commit: ${GITHUB_SHA}.
+
+          **Imagenes publicadas en Docker Hub (tag \`${VERSION}\`):**
+          ${IMAGENES}"
