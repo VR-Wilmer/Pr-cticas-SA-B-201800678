@@ -9,6 +9,7 @@ dist/
 .pnpm-store/
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Charts de terceros descargados por `helm dependency update` (no son
 # nuestro codigo, se re-descargan siempre igual desde Chart.yaml).

@@ -1,0 +1,3 @@
+# Generado en runtime por el job "deploy" del workflow (nunca se versiona,
+# mismo criterio que P5/P6/charts/sa-platform/secrets.local.yaml).
+ci/secrets.ci.local.yaml
