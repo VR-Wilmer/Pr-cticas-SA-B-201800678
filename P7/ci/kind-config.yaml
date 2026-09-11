@@ -1,0 +1,26 @@
+# Config de kind para el cluster efimero del job "deploy": mapea 80/443 del
+# nodo al runner (misma receta que P5/kind-config.yaml) para poder llegar al
+# Ingress Controller desde fuera del cluster con un curl normal.
+#
+# Es necesaria porque las NetworkPolicies del chart (templates/networkpolicies.yaml)
+# SI se aplican en el kindnetd actual (verificado localmente): el gateway solo
+# acepta trafico que venga del namespace "ingress-nginx" -- un pod de prueba
+# corriendo en el namespace de la app no puede alcanzarlo directo, hay que
+# entrar por el mismo camino que un cliente real (el Ingress).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

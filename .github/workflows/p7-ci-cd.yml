@@ -1,0 +1,398 @@
+name: P7 - CI/CD sa-platform
+
+# Disparadores (rubrica 2.4, Versionamiento):
+#   - push/PR sobre archivos de P6 o P7 -> corre siempre build+test (CI).
+#   - solo push a `master` o tags `p7-v*.*.*` -> ademas dockeriza, publica y
+#     despliega (CD). Un PR nunca publica imagenes ni toca el cluster.
+#   - workflow_dispatch -> correr manualmente bajo demanda (evidencia/demo).
+on:
+  push:
+    branches: [master]
+    tags: ["p7-v*.*.*"]
+    paths:
+      - "P6/**"
+      - "P7/**"
+      - ".github/workflows/p7-ci-cd.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "P6/**"
+      - "P7/**"
+      - ".github/workflows/p7-ci-cd.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: p7-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Etapa 1 y 2: build + test, por servicio (matrix). Corre en todo push y
+  # PR: es el gate de calidad antes de dockerizar/desplegar nada.
+  #
+  # Piramide de pruebas (ver imagen de referencia, P7/image.png): cada
+  # servicio corre pruebas UNITARIAS (~70%, con fakes en memoria de sus
+  # puertos, *.test.ts / test_use_cases.py) y de INTEGRACION (~20%, contra
+  # el Postgres real de "services:" abajo, *.integration.test.ts /
+  # test_*_integration.py) para validar persistencia y contratos SQL. No hay
+  # nivel E2E en este pipeline (decision explicita, ver
+  # P7/docs/costos-y-consideraciones.md): el smoke test del job "deploy" es
+  # una verificacion de salud del despliegue, no una suite E2E.
+  # ---------------------------------------------------------------------
+  build-test:
+    name: Build & Test - ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: test_db
+      INTERNAL_SERVICE_SECRET: test-secret-ci
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: identidad-service
+            path: P6/identidad-service
+            runtime: node
+          - name: tickets-service
+            path: P6/tickets-service
+            runtime: node
+          - name: notificaciones-service
+            path: P6/notificaciones-service
+            runtime: node
+          - name: gateway
+            path: P6/gateway
+            runtime: node
+          - name: asignacion-service
+            path: P6/asignacion-service
+            runtime: python
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        if: matrix.runtime == 'node'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: Configurar Node.js 22
+        if: matrix.runtime == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.path }}/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (tsc)
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm run build
+
+      - name: Test (node --test)
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm test
+
+      - name: Configurar Python 3.12
+        if: matrix.runtime == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ${{ matrix.path }}/requirements*.txt
+
+      - name: Instalar dependencias
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Build (compileall)
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: python -m compileall -q app
+
+      - name: Test (pytest)
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: pytest -q
+
+  # ---------------------------------------------------------------------
+  # Etapa 3: build de las 7 imagenes (5 microservicios + 2 cronjobs) y push
+  # a Docker Hub. Solo corre en push a master/tag, nunca en PR (evita
+  # publicar una imagen por cada commit de un PR en revision).
+  # ---------------------------------------------------------------------
+  docker:
+    name: Docker build & push - ${{ matrix.name }}
+    needs: build-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: identidad-service
+            context: P6/identidad-service
+            image: sa-platform-identidad-service
+          - name: tickets-service
+            context: P6/tickets-service
+            image: sa-platform-tickets-service
+          - name: asignacion-service
+            context: P6/asignacion-service
+            image: sa-platform-asignacion-service
+          - name: notificaciones-service
+            context: P6/notificaciones-service
+            image: sa-platform-notificaciones-service
+          - name: gateway
+            context: P6/gateway
+            image: sa-platform-gateway
+          - name: cronjob-heartbeat
+            context: P6/cronjobs/heartbeat
+            image: sa-platform-cronjob-heartbeat
+          - name: cronjob-resumen
+            context: P6/cronjobs/resumen
+            image: sa-platform-cronjob-resumen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Calcular tags de la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=ci-${{ github.sha }}
+
+      - name: Build y push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  # ---------------------------------------------------------------------
+  # Etapa 4: despliegue automatico a un cluster de Kubernetes efimero (kind)
+  # levantado dentro del propio runner. Sin costo de nube, sin credenciales
+  # externas: el cluster se crea, se prueba y se destruye en cada corrida.
+  # ---------------------------------------------------------------------
+  deploy:
+    name: Deploy a Kubernetes (kind efimero)
+    needs: docker
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NAMESPACE: sa-p7-ci
+      RELEASE: sa-platform
+      IMAGE_TAG: ci-${{ github.sha }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Crear cluster kind (con port-mapping 80/443 para el Ingress)
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: sa-p7
+          # Version fijada a la misma usada para verificar este pipeline
+          # localmente (ver P7/docs/costos-y-consideraciones.md) -- el
+          # comportamiento de NetworkPolicy de kindnetd puede variar entre
+          # versiones de kind.
+          version: v0.33.0
+          config: P7/ci/kind-config.yaml
+
+      - name: Info del cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes -o wide
+
+      - name: Instalar ingress-nginx
+        # Verificado localmente (ver P7/docs/costos-y-consideraciones.md):
+        # las NetworkPolicies del chart SI se aplican con el CNI por defecto
+        # de kind -- el gateway solo acepta trafico desde el namespace
+        # "ingress-nginx", asi que el smoke test tiene que entrar por ahi,
+        # igual que un cliente real (misma receta que P5).
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update ingress-nginx
+          helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace \
+            --set 'controller.hostPort.enabled=true' \
+            --set 'controller.service.type=ClusterIP' \
+            --set-string 'controller.nodeSelector.ingress-ready=true' \
+            --set 'controller.tolerations[0].key=node-role.kubernetes.io/control-plane' \
+            --set 'controller.tolerations[0].operator=Equal' \
+            --set 'controller.tolerations[0].effect=NoSchedule' \
+            --wait --timeout 5m
+
+      - name: Login a Docker Hub (para el pull de las 7 imagenes)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Traer y cargar las 7 imagenes al nodo de kind
+        run: |
+          set -euo pipefail
+          for svc in identidad-service tickets-service asignacion-service notificaciones-service gateway cronjob-heartbeat cronjob-resumen; do
+            IMG="docker.io/${DOCKERHUB_USERNAME}/sa-platform-${svc}:${IMAGE_TAG}"
+            echo "== $IMG =="
+            docker pull "$IMG"
+            kind load docker-image "$IMG" --name sa-p7
+          done
+
+      - name: Generar secrets efimeros (nunca se versionan, ver P7/README.md)
+        run: |
+          set -euo pipefail
+          PASSWORD_POSTGRES=$(openssl rand -hex 16)
+          PASSWORD_APP=$(openssl rand -hex 16)
+          JWT_SECRET=$(openssl rand -hex 16)
+          SECRETO_INTERNO=$(openssl rand -hex 16)
+          cat > P7/ci/secrets.ci.local.yaml <<YAML
+          postgresql:
+            auth:
+              postgresPassword: "${PASSWORD_POSTGRES}"
+              password: "${PASSWORD_APP}"
+            primary:
+              initdb:
+                password: "${PASSWORD_POSTGRES}"
+          identidad:
+            secret:
+              data:
+                DB_USER: "sa_app"
+                DB_PASSWORD: "${PASSWORD_APP}"
+                JWT_SECRET: "${JWT_SECRET}"
+                ADMIN_PASSWORD: "Admin12345"
+                AGENTE1_PASSWORD: "Agente12345"
+                AGENTE2_PASSWORD: "Agente12345"
+          tickets:
+            secret:
+              data:
+                DB_USER: "sa_app"
+                DB_PASSWORD: "${PASSWORD_APP}"
+                INTERNAL_SERVICE_SECRET: "${SECRETO_INTERNO}"
+          asignacion:
+            secret:
+              data:
+                DB_USER: "sa_app"
+                DB_PASSWORD: "${PASSWORD_APP}"
+                INTERNAL_SERVICE_SECRET: "${SECRETO_INTERNO}"
+          notificaciones:
+            secret:
+              data:
+                DB_USER: "sa_app"
+                DB_PASSWORD: "${PASSWORD_APP}"
+                INTERNAL_SERVICE_SECRET: "${SECRETO_INTERNO}"
+          cronjobs:
+            heartbeat:
+              secret:
+                data:
+                  DB_USER: "sa_app"
+                  DB_PASSWORD: "${PASSWORD_APP}"
+            resumen:
+              secret:
+                data:
+                  DB_USER: "sa_app"
+                  DB_PASSWORD: "${PASSWORD_APP}"
+          YAML
+
+      - name: Resolver dependencias del chart (subcharts + Bitnami)
+        run: |
+          set -euo pipefail
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm dependency update P6/charts/sa-platform/charts/identidad
+          helm dependency update P6/charts/sa-platform/charts/tickets
+          helm dependency update P6/charts/sa-platform/charts/asignacion
+          helm dependency update P6/charts/sa-platform/charts/notificaciones
+          helm dependency update P6/charts/sa-platform/charts/gateway
+          helm dependency update P6/charts/sa-platform
+
+      - name: helm lint
+        run: |
+          helm lint P6/charts/sa-platform \
+            -f P6/charts/sa-platform/values-dev.yaml \
+            -f P7/ci/secrets.ci.local.yaml
+
+      - name: helm upgrade --install (despliegue automatico)
+        run: |
+          helm upgrade --install "$RELEASE" P6/charts/sa-platform \
+            -n "$NAMESPACE" --create-namespace \
+            -f P6/charts/sa-platform/values-dev.yaml \
+            -f P7/ci/secrets.ci.local.yaml \
+            --set gateway.ingress.host=sa-p7.local \
+            --set identidad.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-identidad-service" \
+            --set identidad.image.tag="${IMAGE_TAG}" \
+            --set tickets.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-tickets-service" \
+            --set tickets.image.tag="${IMAGE_TAG}" \
+            --set asignacion.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-asignacion-service" \
+            --set asignacion.image.tag="${IMAGE_TAG}" \
+            --set notificaciones.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-notificaciones-service" \
+            --set notificaciones.image.tag="${IMAGE_TAG}" \
+            --set gateway.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-gateway" \
+            --set gateway.image.tag="${IMAGE_TAG}" \
+            --set cronjobs.heartbeat.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-cronjob-heartbeat" \
+            --set cronjobs.heartbeat.image.tag="${IMAGE_TAG}" \
+            --set cronjobs.resumen.image.repository="docker.io/${DOCKERHUB_USERNAME}/sa-platform-cronjob-resumen" \
+            --set cronjobs.resumen.image.tag="${IMAGE_TAG}" \
+            --timeout 10m --wait
+
+      - name: Verificar pods y rollout
+        run: |
+          kubectl get pods -n "$NAMESPACE" -o wide
+          for dep in identidad-service tickets-service asignacion-service notificaciones-service gateway; do
+            kubectl rollout status deployment/$dep -n "$NAMESPACE" --timeout=120s
+          done
+
+      - name: Smoke test - /health end-to-end a traves del Ingress
+        # Entra por donde entraria un cliente real (Ingress -> gateway), no
+        # directo a la ClusterIP: las NetworkPolicies del chart solo dejan
+        # pasar al gateway trafico que venga del namespace ingress-nginx.
+        run: |
+          curl -sf --retry 10 --retry-delay 3 --retry-connrefused \
+            --resolve sa-p7.local:80:127.0.0.1 http://sa-p7.local/health
+
+      - name: helm history (evidencia del release)
+        if: always()
+        run: helm history "$RELEASE" -n "$NAMESPACE"
+
+      - name: Diagnostico si algo fallo
+        if: failure()
+        run: |
+          kubectl get all -n "$NAMESPACE"
+          kubectl describe pods -n "$NAMESPACE"
+          kubectl logs -l app.kubernetes.io/part-of=sa-platform -n "$NAMESPACE" --all-containers --tail=200 || true
