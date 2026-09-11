@@ -1,6 +1,6 @@
 # Diagrama del pipeline CI/CD
 
-## Vista general (4 etapas)
+## Vista general (4 etapas + generación de versión)
 
 ```mermaid
 flowchart LR
@@ -49,8 +49,16 @@ flowchart LR
 
     D2 --> K0 --> K1 --> K2 --> K3 --> K4 --> K5
 
+    subgraph E5["5. Generacion de version (solo tags p7-v*.*.*)"]
+        R1["gh release create\ncon el numero de version"]
+        R2["Registro: GitHub Releases\n+ notas + imagenes Docker Hub\nde esa version"]
+    end
+
+    K5 -->|"solo si el ref es un tag p7-v*"| R1 --> R2
+
     style PR fill:#f8f2e6,stroke:#b08a3c
     style E4 fill:#eef5ee,stroke:#3c7a45
+    style E5 fill:#f3eef8,stroke:#7a3c9e
 ```
 
 ## Detalle del job `deploy` (etapa 4)
@@ -80,7 +88,8 @@ sequenceDiagram
 
 En la pestaña **Actions → (una corrida) → p7-ci-cd.yml**, GitHub dibuja un
 grafo equivalente con nodos reales por cada combinación de matrix (5 nodos
-`build-test`, 7 nodos `docker`, 1 nodo `deploy`), conectados por las
+`build-test`, 7 nodos `docker`, 1 nodo `deploy`, y — solo en una corrida
+disparada por un tag `p7-v*.*.*` — 1 nodo `release`), conectados por las
 dependencias `needs:`. Esa vista **es** la evidencia visual que pide la
 rúbrica (punto 1.2, Diagrama pipeline) además de este diagrama estático —
 ver `docs/evidencia/README.md` para dónde queda la captura.
