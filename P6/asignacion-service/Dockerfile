@@ -14,6 +14,12 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 WORKDIR /app
+# Parches de seguridad del SO base al momento de build: la imagen oficial
+# python:3.12-slim no siempre esta reconstruida contra el ultimo paquete
+# Debian parcheado (ej. CVE-2026-13221 de perl-base, bloqueado por Trivy
+# en el pipeline) -- se fuerza el upgrade aqui en vez de esperar a que
+# Docker Hub republique la imagen base.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 1000 app && useradd --system --uid 1000 --gid app --no-create-home app
 COPY --from=build /opt/venv /opt/venv
 COPY app ./app
