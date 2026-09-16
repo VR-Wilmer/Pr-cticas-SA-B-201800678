@@ -47,11 +47,9 @@ pdb:
   enabled: true
   minAvailable: 1
 
-serviceAccount:
-  create: true
-
-rbac:
-  extraRules: []
+# ServiceAccount/Role/RoleBinding: Practica 8 los mueve a Terraform
+# (P8/terraform), con el mismo nombre que "common.fullname" -- este chart
+# ya no los crea, ver charts/common/templates/_rbac.tpl (eliminado).
 
 ingress:
   enabled: false
@@ -63,8 +61,6 @@ configMap:
     DB_PORT: "5432"
     DB_NAME: "asignacion_db"
 
-secret:
-  data:
-    DB_USER: ""
-    DB_PASSWORD: ""
-    INTERNAL_SERVICE_SECRET: ""
+# El Secret "asignacion-service" (DB_USER, DB_PASSWORD, INTERNAL_SERVICE_SECRET)
+# ya no se declara aqui (Practica 8): lo materializa Sealed Secrets, ver
+# P8/sealed-secrets/seal-secrets.sh.

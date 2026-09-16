@@ -1,0 +1,39 @@
+# Requisito "Politicas como codigo" #2 (Practica 8): todo contenedor debe
+# declarar limites y solicitudes de CPU/memoria -- ya lo hace nuestro
+# propio chart (charts/common/templates/_workload.tpl), esta politica lo
+# hace exigible tambien para cualquier Pod que no venga de ese chart
+# (ej. un Pod de depuracion desplegado a mano), cerrando el hueco que la
+# 1ra debilidad del enunciado describe ("el pipeline avanza a ciegas").
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resources
+  annotations:
+    policies.kyverno.io/title: Require Resource Requests/Limits
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Bloquea cualquier Pod cuyos contenedores no declaren requests y
+      limits de cpu y memory.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-resources
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Todo contenedor debe declarar resources.requests y resources.limits de cpu y memory."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    cpu: "?*"
+                    memory: "?*"
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"

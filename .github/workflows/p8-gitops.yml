@@ -1,0 +1,342 @@
+name: P8 - GitOps y cadena de suministro
+
+# Que cambia respecto a P7 (.github/workflows/p7-ci-cd.yml, que sigue
+# existiendo sin tocar):
+#   - El job "deploy" de P7 (helm upgrade contra un kind efimero) NO
+#     existe aqui. Este pipeline NUNCA toca el cluster: construye,
+#     escanea y firma las imagenes, y su unica salida hacia el cluster es
+#     un Pull Request contra el repo GitOps (sa-platform-gitops). ArgoCD
+#     es quien sincroniza ese repo -- rubrica 2.3.
+#   - Sin pruebas de humo ni de carga (decision explicita del usuario, ver
+#     P8/docs/costos-y-consideraciones.md): el AnalysisTemplate que
+#     condiciona el canary usa el provider "web" nativo de Argo Rollouts
+#     contra /health, no un job de este pipeline.
+#
+# Triggers: igual criterio que P7 (push/PR a master con filtro de paths,
+# workflow_dispatch para evidencia bajo demanda). Un PR nunca construye,
+# escanea, firma ni abre PR contra el repo GitOps -- solo corre "build-test"
+# como gate de calidad.
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    paths:
+      - "P6/**"
+      - "P8/**"
+      - ".github/workflows/p8-gitops.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: p8-gitops-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Igual que el job "build-test" de P7 (mismo matrix, mismas pruebas
+  # unitarias+integracion) -- se reusa como gate de calidad antes de
+  # construir/escanear/firmar nada. Ver P7/docs/estrategia-de-pruebas.md.
+  # ---------------------------------------------------------------------
+  build-test:
+    name: Build & Test - ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: test_db
+      INTERNAL_SERVICE_SECRET: test-secret-ci
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: identidad-service
+            path: P6/identidad-service
+            runtime: node
+          - name: tickets-service
+            path: P6/tickets-service
+            runtime: node
+          - name: notificaciones-service
+            path: P6/notificaciones-service
+            runtime: node
+          - name: gateway
+            path: P6/gateway
+            runtime: node
+          - name: asignacion-service
+            path: P6/asignacion-service
+            runtime: python
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        if: matrix.runtime == 'node'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: Configurar Node.js 22
+        if: matrix.runtime == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.path }}/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (tsc)
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm run build
+
+      - name: Test (node --test)
+        if: matrix.runtime == 'node'
+        working-directory: ${{ matrix.path }}
+        run: pnpm test
+
+      - name: Configurar Python 3.12
+        if: matrix.runtime == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ${{ matrix.path }}/requirements*.txt
+
+      - name: Instalar dependencias
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Build (compileall)
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: python -m compileall -q app
+
+      - name: Test (pytest)
+        if: matrix.runtime == 'python'
+        working-directory: ${{ matrix.path }}
+        run: pytest -q
+
+  # ---------------------------------------------------------------------
+  # Etapa de seguridad de la cadena de suministro (rubrica 2.6): por cada
+  # una de las 7 imagenes (5 microservicios + 2 cronjobs, igual que P7),
+  # Trivy bloquea el job si encuentra CVE CRITICAL antes de publicar nada,
+  # se genera un SBOM (CycloneDX), se publica la imagen en Docker Hub, y
+  # se firma en modo KEYLESS con Cosign (sin ninguna llave privada
+  # guardada como secret -- usa el token OIDC de este mismo job via
+  # "permissions: id-token: write").
+  # ---------------------------------------------------------------------
+  docker-scan-sign:
+    name: Build, scan & sign - ${{ matrix.name }}
+    needs: build-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # requerido por Cosign keyless (OIDC de Sigstore)
+    outputs:
+      identidad-service: ${{ steps.tag.outputs.identidad-service }}
+      tickets-service: ${{ steps.tag.outputs.tickets-service }}
+      asignacion-service: ${{ steps.tag.outputs.asignacion-service }}
+      notificaciones-service: ${{ steps.tag.outputs.notificaciones-service }}
+      gateway: ${{ steps.tag.outputs.gateway }}
+      cronjob-heartbeat: ${{ steps.tag.outputs.cronjob-heartbeat }}
+      cronjob-resumen: ${{ steps.tag.outputs.cronjob-resumen }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: identidad-service
+            context: P6/identidad-service
+            image: sa-platform-identidad-service
+          - name: tickets-service
+            context: P6/tickets-service
+            image: sa-platform-tickets-service
+          - name: asignacion-service
+            context: P6/asignacion-service
+            image: sa-platform-asignacion-service
+          - name: notificaciones-service
+            context: P6/notificaciones-service
+            image: sa-platform-notificaciones-service
+          - name: gateway
+            context: P6/gateway
+            image: sa-platform-gateway
+          - name: cronjob-heartbeat
+            context: P6/cronjobs/heartbeat
+            image: sa-platform-cronjob-heartbeat
+          - name: cronjob-resumen
+            context: P6/cronjobs/resumen
+            image: sa-platform-cronjob-resumen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Calcular tag de version (semver desde Git, requisito "Versionamiento semantico")
+        id: tag
+        run: |
+          set -euo pipefail
+          # Igual criterio que P7 (docker/metadata-action con
+          # type=match,pattern=p8-v(.*)): si el push es un tag p8-v*.*.*
+          # se usa ese numero; si no, un tag inmutable derivado del sha
+          # (nunca "latest" -- prohibido por la politica Kyverno
+          # disallow-latest-tag).
+          if [[ "${GITHUB_REF}" == refs/tags/p8-v* ]]; then
+            VERSION="${GITHUB_REF_NAME#p8-v}"
+          else
+            VERSION="ci-${GITHUB_SHA::12}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "${{ matrix.name }}=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build (sin publicar todavia -- primero hay que escanear)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: false
+          load: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      - name: Trivy - bloquear ante CVE CRITICAL antes de publicar
+        uses: aquasecurity/[email protected]
+        with:
+          image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
+          format: table
+          severity: CRITICAL
+          exit-code: "1" # el job (y por lo tanto el PR) queda bloqueado si hay al menos 1 CVE CRITICAL
+          ignore-unfixed: true
+
+      - name: Generar reporte completo de Trivy (evidencia, no bloqueante)
+        if: always()
+        uses: aquasecurity/[email protected]
+        with:
+          image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
+          format: json
+          output: trivy-report-${{ matrix.name }}.json
+          exit-code: "0"
+
+      - name: Generar SBOM (CycloneDX, requisito "Seguridad de la cadena de suministro")
+        uses: anchore/[email protected]
+        with:
+          image: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
+          format: cyclonedx-json
+          output-file: sbom-${{ matrix.name }}.json
+
+      - name: Publicar reportes como artifact (evidencia permanente del run)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seguridad-${{ matrix.name }}
+          path: |
+            trivy-report-${{ matrix.name }}.json
+            sbom-${{ matrix.name }}.json
+          retention-days: 90
+
+      - name: Push a Docker Hub (solo si Trivy no bloqueo)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+
+      - name: Instalar Cosign
+        uses: sigstore/[email protected]
+
+      - name: Firmar la imagen publicada (Cosign keyless/OIDC, sin llaves guardadas)
+        run: |
+          cosign sign --yes \
+            "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}"
+
+      - name: Verificar la firma (comprobacion in-pipeline, ademas de la que hace Kyverno en el cluster)
+        run: |
+          cosign verify \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}"
+
+  # ---------------------------------------------------------------------
+  # GitOps: la UNICA forma en que este pipeline "llega" al cluster es
+  # abriendo un Pull Request contra sa-platform-gitops (repo
+  # independiente) que cambia el tag de imagen en values-staging.yaml.
+  # No hay kubeconfig ni credenciales de cluster en ningun paso de este
+  # workflow -- ver P8/docs/costos-y-consideraciones.md.
+  # ---------------------------------------------------------------------
+  gitops-pr:
+    name: Abrir PR en sa-platform-gitops (staging)
+    needs: docker-scan-sign
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      GITOPS_REPO: VR-Wilmer/sa-platform-gitops
+    steps:
+      - name: Clonar sa-platform-gitops
+        run: |
+          git clone "https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/${GITOPS_REPO}.git" gitops
+          cd gitops
+          git config user.name "sa-platform-ci-bot"
+          git config user.email "ci@sa-platform.local"
+          git checkout -b "bump-staging-${GITHUB_SHA::12}"
+
+      - name: Bump de image.tag en values-staging.yaml (yq, mikefarah/yq preinstalado en ubuntu-latest)
+        run: |
+          set -euo pipefail
+          cd gitops
+          yq -i '.identidad.image.tag = "${{ needs.docker-scan-sign.outputs.identidad-service }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.tickets.image.tag = "${{ needs.docker-scan-sign.outputs.tickets-service }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.asignacion.image.tag = "${{ needs.docker-scan-sign.outputs.asignacion-service }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.notificaciones.image.tag = "${{ needs.docker-scan-sign.outputs.notificaciones-service }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.gateway.image.tag = "${{ needs.docker-scan-sign.outputs.gateway }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.cronjobs.heartbeat.image.tag = "${{ needs.docker-scan-sign.outputs.cronjob-heartbeat }}"' charts/sa-platform/values-staging.yaml
+          yq -i '.cronjobs.resumen.image.tag = "${{ needs.docker-scan-sign.outputs.cronjob-resumen }}"' charts/sa-platform/values-staging.yaml
+
+      - name: Commit + push + abrir PR (gh CLI)
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_PAT }}
+        run: |
+          set -euo pipefail
+          cd gitops
+          git add charts/sa-platform/values-staging.yaml
+          git commit -m "chore(staging): bump image tags - ${GITHUB_SHA::12}"
+          git push -u origin "bump-staging-${GITHUB_SHA::12}"
+          gh pr create \
+            --repo "${GITOPS_REPO}" \
+            --title "Bump staging image tags (${GITHUB_SHA::12})" \
+            --body "Generado automaticamente por .github/workflows/p8-gitops.yml del repo de codigo. Commit origen: ${GITHUB_SHA}." \
+            --base main
+
+      - name: Auto-mergear el PR de staging
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_PAT }}
+        run: |
+          cd gitops
+          gh pr merge --repo "${GITOPS_REPO}" --squash --auto "bump-staging-${GITHUB_SHA::12}"

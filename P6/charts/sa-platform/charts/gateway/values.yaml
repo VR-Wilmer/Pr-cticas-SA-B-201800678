@@ -48,11 +48,9 @@ pdb:
   enabled: true
   minAvailable: 1
 
-serviceAccount:
-  create: true
-
-rbac:
-  extraRules: []
+# ServiceAccount/Role/RoleBinding: Practica 8 los mueve a Terraform
+# (P8/terraform), con el mismo nombre que "common.fullname" -- este chart
+# ya no los crea, ver charts/common/templates/_rbac.tpl (eliminado).
 
 # Unica puerta de entrada al cluster (requisito E): el resto de subcharts
 # deja ingress.enabled=false.
@@ -73,6 +71,6 @@ configMap:
     ASIGNACION_SERVICE_URL: "http://asignacion-service:8000"
     NOTIFICACIONES_SERVICE_URL: "http://notificaciones-service:4400"
 
-# El Gateway no maneja credenciales propias (no tiene BD ni broker).
-secret:
-  data: {}
+# El Gateway no maneja credenciales propias (no tiene BD ni broker), pero
+# igual necesita un Secret "gateway" vacio (Practica 8: lo sella
+# seal-secrets.sh) porque el Rollout hace envFrom.secretRef.name=gateway.

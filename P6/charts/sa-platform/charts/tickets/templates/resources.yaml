@@ -1,16 +1,12 @@
-{{ include "common.serviceaccount" . }}
----
-{{ include "common.role" . }}
----
-{{ include "common.rolebinding" . }}
----
 {{ include "common.configmap" . }}
----
-{{ include "common.secret" . }}
 ---
 {{ include "common.service" . }}
 ---
-{{ include "common.deployment" . }}
+{{ include "common.rolloutServices" . }}
+---
+{{ include "common.rollout" . }}
+---
+{{ include "common.analysistemplate" . }}
 ---
 {{ include "common.hpa" . }}
 ---

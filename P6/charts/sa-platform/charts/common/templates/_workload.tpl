@@ -1,6 +1,15 @@
-{{- define "common.deployment" -}}
-apiVersion: apps/v1
-kind: Deployment
+{{/*
+Rollout (Practica 8: entrega progresiva). Reemplaza al Deployment de P5/P6
+-- mismo pod template (probes, securityContext, resources), pero con una
+estrategia canary de 3 pasos de promocion (20% / 50% / 100%), cada uno de
+los dos primeros condicionado al AnalysisTemplate (common.analysistemplate)
+contra el Service canario (common.rolloutServices). Si el analisis falla,
+Argo Rollouts aborta y devuelve el peso a 0 automaticamente -- el 100% del
+trafico real nunca llega a tocar la version defectuosa.
+*/}}
+{{- define "common.rollout" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ include "common.fullname" . }}
   labels:
@@ -11,14 +20,22 @@ spec:
   {{- else }}
   replicas: {{ .Values.replicaCount | default 2 }}
   {{- end }}
-  # RollingUpdate sin caida de servicio (requisito F): nunca hay menos
-  # replicas que las que ya estaban listas, se agrega 1 extra mientras se
-  # reemplaza cada pod viejo.
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+    canary:
+      canaryService: {{ include "common.fullname" . }}-canary
+      stableService: {{ include "common.fullname" . }}-stable
+      steps:
+        - setWeight: 20
+        - analysis:
+            templates:
+              - templateName: {{ include "common.fullname" . }}-analysis
+        - pause: { duration: 30s }
+        - setWeight: 50
+        - analysis:
+            templates:
+              - templateName: {{ include "common.fullname" . }}-analysis
+        - pause: { duration: 30s }
+        - setWeight: 100
   selector:
     matchLabels:
       {{- include "common.selectorLabels" . | nindent 6 }}
@@ -27,11 +44,13 @@ spec:
       labels:
         {{- include "common.labels" . | nindent 8 }}
       annotations:
-        # Fuerza un rolling restart cuando cambia el ConfigMap/Secret
-        # (requisito B): al cambiar el hash, el Pod template cambia, y
-        # Deployment dispara un rollout aunque la imagen siga igual.
+        # Fuerza un rollout cuando cambia el ConfigMap (requisito B): al
+        # cambiar el hash, el Pod template cambia, y Argo Rollouts dispara
+        # una nueva version canary aunque la imagen siga igual. No hay
+        # checksum/secret: el Secret ya no lo renderiza este chart (lo
+        # materializa Sealed Secrets, ver _config.tpl), asi que no hay
+        # contenido en texto plano aqui que hashear.
         checksum/config: {{ include "common.configmap" . | sha256sum }}
-        checksum/secret: {{ include "common.secret" . | sha256sum }}
     spec:
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
@@ -119,8 +138,11 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
+    # Practica 8: apunta al Rollout (no al Deployment) -- Argo Rollouts
+    # implementa el subrecurso /scale igual que un Deployment, el HPA no
+    # necesita ningun otro cambio.
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
     name: {{ include "common.fullname" . }}
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}

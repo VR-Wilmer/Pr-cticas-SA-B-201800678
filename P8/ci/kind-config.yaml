@@ -1,0 +1,31 @@
+# Config de kind para el cluster local "sa-p8" (bootstrap de calificacion,
+# ver P8/MANUAL_TECNICO.md) -- misma receta que P7/ci/kind-config.yaml
+# (mapea 80/443 del nodo al host para llegar al Ingress/ArgoCD UI con un
+# curl/navegador normal). A diferencia de P7, este cluster NO es efimero
+# dentro de un runner: es local, se levanta una vez y se mantiene mientras
+# se genera evidencia, y solo debe estar encendido durante los 10 minutos
+# de calificacion (el resto de evidencia son URLs permanentes de GitHub
+# Actions).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: sa-p8
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      # Puerto adicional para exponer la UI de ArgoCD localmente durante
+      # la calificacion (port-forward hacia argocd-server, ver manual).
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP

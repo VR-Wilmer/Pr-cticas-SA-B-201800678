@@ -1,0 +1,268 @@
+<?xml version="1.0" ?>
+<mxfile host="app.diagrams.net">
+  <diagram id="flujo-general" name="Flujo GitOps - vista general">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="grp_ci" value="Repo de codigo - .github/workflows/p8-gitops.yml" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="300" height="460" as="geometry"/>
+        </mxCell>
+        <mxCell id="grp_gitops" value="Repo GitOps - sa-platform-gitops (independiente)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="20" width="260" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="grp_cluster" value="Cluster kind - sa-p8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=12;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="20" width="380" height="620" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_dev" value="Commit / PR&#10;(P6 o P8)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="140" width="150" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_bt" value="build-test&#10;(unitarias + integracion,&#10;gate de calidad)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="60" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_ds" value="docker-scan-sign (x7 imagenes)&#10;Trivy CRITICAL bloquea" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f2e6;strokeColor=#b08a3c;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="150" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_sbom" value="SBOM (CycloneDX) +&#10;Cosign sign (keyless/OIDC)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8f2e6;strokeColor=#b08a3c;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="240" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_pr" value="gitops-pr&#10;PR -&gt; values-staging.yaml&#10;(solo bump de image.tag)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="220" y="330" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_vs" value="values-staging.yaml&#10;(auto-merge)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="70" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_vp" value="values-prod.yaml&#10;(merge manual = gate de promocion)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="160" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_ss" value="sealed-secrets/*.yaml&#10;(ciphertext, nunca texto plano)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="260" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_argo" value="ArgoCD&#10;(unico componente que aplica&#10;cambios al cluster, selfHeal)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="60" width="340" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_kyverno" value="Kyverno&#10;(admision: latest, resources,&#10;nonroot, firma Cosign)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f3eef8;strokeColor=#7a3c9e;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="150" width="340" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_sealed" value="Sealed Secrets controller&#10;(descifra SealedSecret -&gt; Secret)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="240" width="340" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_rollout" value="Argo Rollouts&#10;canary 20% -&gt; analysis -&gt; 50% -&gt; analysis -&gt; 100%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5ee;strokeColor=#3c7a45;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="330" width="340" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_analysis" value="AnalysisTemplate&#10;provider: web GET /health" style="rhombus;whiteSpace=wrap;html=1;fillColor=#eef5ee;strokeColor=#3c7a45;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="420" width="340" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_reject" value="Despliegue rechazado&#10;(evidencia: P8/docs/evidencia)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbeaea;strokeColor=#a33c3c;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="150" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_promote" value="Promueve al siguiente paso&#10;(hasta 100%)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="510" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_abort" value="Aborta: peso -&gt; 0&#10;(reversion automatica)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbeaea;strokeColor=#a33c3c;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="510" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n_stable" value="Version estable&#10;(100% trafico hasta que&#10;el canary se promueve)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="940" y="600" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_dev" target="n_bt" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_bt" target="n_ds" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_ds" target="n_sbom" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_sbom" target="n_pr" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_pr" target="n_vs" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_5" value="PR manual" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_pr" target="n_vp" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_vs" target="n_argo" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_vp" target="n_argo" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_ss" target="n_sealed" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_9" value="sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_argo" target="n_kyverno" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_10" value="admite" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_kyverno" target="n_rollout" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_11" value="rechaza" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_kyverno" target="n_reject" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_12" value="Secret materializado" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_sealed" target="n_rollout" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_rollout" target="n_analysis" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_14" value="exito x3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_analysis" target="n_promote" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_15" value="1 fallo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_analysis" target="n_abort" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_promote" target="n_stable" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1_17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=10;" edge="1" source="n_abort" target="n_stable" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="flujo-fallo" name="Fallo inducido y reversion automatica">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" page="1" pageWidth="1500" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="a_dev" value="Desarrollador" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_dev_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="80" as="sourcePoint"/>
+            <mxPoint x="100" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_ci" value="GitHub Actions&#10;(p8-gitops.yml)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_ci_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="80" as="sourcePoint"/>
+            <mxPoint x="300" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_go" value="sa-platform-gitops" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_go_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="540" y="80" as="sourcePoint"/>
+            <mxPoint x="540" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_argo" value="ArgoCD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_argo_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="80" as="sourcePoint"/>
+            <mxPoint x="740" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_kv" value="Kyverno" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_kv_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="940" y="80" as="sourcePoint"/>
+            <mxPoint x="940" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_ar" value="Argo Rollouts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_ar_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="80" as="sourcePoint"/>
+            <mxPoint x="1120" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_an" value="AnalysisTemplate&#10;(/health)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="20" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_an_line" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1340" y="80" as="sourcePoint"/>
+            <mxPoint x="1340" y="820" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="seq_0" value="push (version con /health roto)" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="110" as="sourcePoint"/>
+            <mxPoint x="300" y="110" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note_1" value="build-test OK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="310" y="148" width="260" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="note_2" value="Trivy OK, SBOM, Cosign sign (keyless)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="310" y="198" width="260" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="seq_3" value="PR bump image.tag (values-staging.yaml)" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="270" as="sourcePoint"/>
+            <mxPoint x="540" y="270" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note_4" value="auto-merge (staging)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="308" width="260" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="seq_5" value="detecta diff (poll/webhook)" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="370" as="sourcePoint"/>
+            <mxPoint x="540" y="370" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="seq_6" value="intenta aplicar el Rollout actualizado" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="420" as="sourcePoint"/>
+            <mxPoint x="940" y="420" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="seq_7" value="admite (imagen firmada, politicas OK)" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="940" y="470" as="sourcePoint"/>
+            <mxPoint x="740" y="470" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="seq_8" value="sync -&gt; nueva revision del Rollout" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="520" as="sourcePoint"/>
+            <mxPoint x="1120" y="520" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note_9" value="setWeight 20%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="548" width="260" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="seq_10" value="GET /health (canary) x3 cada 10s" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="610" as="sourcePoint"/>
+            <mxPoint x="1340" y="610" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="seq_11" value="primera respuesta != 200 -&gt; Failed" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;strokeColor=#a33c3c;fontColor=#a33c3c;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1340" y="660" as="sourcePoint"/>
+            <mxPoint x="1120" y="660" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note_12" value="aborta, peso vuelve a 0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="698" width="260" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="seq_13" value="Rollout Degraded -&gt; Healthy (vuelto a estable)" style="edgeStyle=none;html=1;fontSize=10;endArrow=block;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="760" as="sourcePoint"/>
+            <mxPoint x="740" y="760" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note_final" value="Evidencia: run de GitHub Actions (permanente) + AnalysisRun Failed + informe-incidente.md" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="810" width="900" height="40" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

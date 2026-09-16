@@ -1,40 +1,13 @@
 {{- $name := .Values.heartbeat.nameOverride }}
 {{- $labels := include "cronjobs.labels" (dict "root" $ "name" $name) }}
 {{- $selector := include "cronjobs.selectorLabels" (dict "root" $ "name" $name) }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ $name }}
-  labels:
-    {{- $labels | nindent 4 }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: {{ $name }}
-  labels:
-    {{- $labels | nindent 4 }}
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    resourceNames: [{{ $name | quote }}]
-    verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: {{ $name }}
-  labels:
-    {{- $labels | nindent 4 }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: {{ $name }}
-subjects:
-  - kind: ServiceAccount
-    name: {{ $name }}
-    namespace: {{ .Release.Namespace }}
----
+{{- /*
+Practica 8: ServiceAccount/Role/RoleBinding se mueven a Terraform
+(P8/terraform, mismo nombre "$name") y el Secret lo materializa Sealed
+Secrets a partir del SealedSecret del repo GitOps -- este chart ya no crea
+ninguno de los dos, solo referencia sus nombres abajo (serviceAccountName,
+secretRef).
+*/}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,18 +17,6 @@ metadata:
 data:
   {{- range $key, $value := .Values.heartbeat.configMap.data }}
   {{ $key }}: {{ $value | quote }}
-  {{- end }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ $name }}
-  labels:
-    {{- $labels | nindent 4 }}
-type: Opaque
-data:
-  {{- range $key, $value := .Values.heartbeat.secret.data }}
-  {{ $key }}: {{ $value | toString | b64enc }}
   {{- end }}
 ---
 apiVersion: batch/v1

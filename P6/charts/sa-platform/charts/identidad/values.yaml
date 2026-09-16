@@ -49,11 +49,9 @@ pdb:
   enabled: true
   minAvailable: 1
 
-serviceAccount:
-  create: true
-
-rbac:
-  extraRules: []
+# ServiceAccount/Role/RoleBinding: Practica 8 los mueve a Terraform
+# (P8/terraform), con el mismo nombre que "common.fullname" -- este chart
+# ya no los crea, ver charts/common/templates/_rbac.tpl (eliminado).
 
 ingress:
   enabled: false
@@ -75,11 +73,7 @@ configMap:
 
 # Sensible (requisito B): va a un Secret. Valores reales se pasan con
 # -f secrets.local.yaml (gitignored) -- ver values.example.yaml.
-secret:
-  data:
-    DB_USER: ""
-    DB_PASSWORD: ""
-    JWT_SECRET: ""
-    ADMIN_PASSWORD: ""
-    AGENTE1_PASSWORD: ""
-    AGENTE2_PASSWORD: ""
+# El Secret "identidad-service" (DB_USER, DB_PASSWORD, JWT_SECRET,
+# ADMIN_PASSWORD, AGENTE1_PASSWORD, AGENTE2_PASSWORD) ya no se declara aqui
+# (Practica 8): lo materializa Sealed Secrets, ver
+# P8/sealed-secrets/seal-secrets.sh.

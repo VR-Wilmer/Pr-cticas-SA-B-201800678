@@ -1,0 +1,46 @@
+# Requisito "Seguridad de la cadena de suministro" (Practica 8, mas alla
+# de las 3 politicas obligatorias): ninguna imagen propia puede desplegarse
+# sin verificar que fue firmada por el propio pipeline con Cosign en modo
+# keyless/OIDC (sin llaves privadas guardadas, ver
+# .github/workflows/p8-gitops.yml). Kyverno reverifica la firma en el
+# cluster en el momento de la admision -- no basta con que el pipeline la
+# haya firmado, el cluster tambien la exige antes de correr el Pod.
+#
+# IMPORTANTE: reemplazar <DOCKERHUB_USERNAME> por el usuario real de Docker
+# Hub (el mismo secret DOCKERHUB_USERNAME de P7/P8) antes de aplicar esta
+# politica -- ver P8/MANUAL_TECNICO.md.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+  annotations:
+    policies.kyverno.io/title: Verify Cosign Keyless Image Signature
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Verifica, con el registro de transparencia de Sigstore, que la
+      imagen fue firmada en modo keyless por el workflow de GitHub Actions
+      de este repositorio -- rechaza cualquier imagen sin firma valida o
+      firmada por un origen distinto.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-cosign-keyless
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      imageExtractors: {}
+      verifyImages:
+        - imageReferences:
+            - "docker.io/<DOCKERHUB_USERNAME>/sa-platform-*"
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/VR-Wilmer/Pr-cticas-SA-B-201800678/.github/workflows/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev

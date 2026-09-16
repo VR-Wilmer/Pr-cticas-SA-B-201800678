@@ -25,10 +25,9 @@ heartbeat:
       DB_PORT: "5432"
       PLATFORM_DB_NAME: "platform_db"
       CARNE: "201800678"
-  secret:
-    data:
-      DB_USER: ""
-      DB_PASSWORD: ""
+  # El Secret "cronjob-heartbeat" (DB_USER, DB_PASSWORD) ya no se declara
+  # aqui (Practica 8): lo materializa Sealed Secrets, ver
+  # P8/sealed-secrets/seal-secrets.sh.
 
 # Cronjob 2 (requisito H): cada 10 minutos lee lo que dejo el Cronjob 1,
 # calcula el resumen por hora y lo publica en Kafka.
@@ -59,7 +58,6 @@ resumen:
       CARNE: "201800678"
       KAFKA_BROKERS: "kafka:9092"
       KAFKA_CRONJOB_RESUMEN_TOPIC: "cronjob-resumen"
-  secret:
-    data:
-      DB_USER: ""
-      DB_PASSWORD: ""
+  # El Secret "cronjob-resumen" (DB_USER, DB_PASSWORD) ya no se declara
+  # aqui (Practica 8): lo materializa Sealed Secrets, ver
+  # P8/sealed-secrets/seal-secrets.sh.

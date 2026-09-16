@@ -18,23 +18,11 @@ data:
 {{- end -}}
 
 {{/*
-Secret: credenciales (password de BD, JWT_SECRET, INTERNAL_SERVICE_SECRET,
-etc). Igual que el ConfigMap, se recorre con range; Helm codifica cada valor
-en base64 automaticamente con `b64enc`. Los valores reales nunca estan en
-values.yaml/values-dev.yaml/values-prod.yaml versionados -- se pasan con
-`-f secrets.local.yaml` (gitignored) en el install/upgrade, ver
-values.example.yaml para la forma esperada.
+Secret: a partir de P8, este chart YA NO crea el objeto Secret (requisito
+"Gestion de secretos" de la Practica 8). El controlador de Sealed Secrets
+lo materializa a partir del SealedSecret versionado en el repo GitOps
+(P8/sealed-secrets/), con el mismo nombre que "common.fullname" -- por eso
+el Deployment/Rollout sigue haciendo "secretRef: name: <fullname>" sin
+ningun cambio, solo deja de ser este chart quien lo crea. Ver
+P8/sealed-secrets/seal-secrets.sh y P8/docs/costos-y-consideraciones.md.
 */}}
-{{- define "common.secret" -}}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ include "common.fullname" . }}
-  labels:
-    {{- include "common.labels" . | nindent 4 }}
-type: Opaque
-data:
-  {{- range $key, $value := .Values.secret.data }}
-  {{ $key }}: {{ $value | toString | b64enc }}
-  {{- end }}
-{{- end -}}

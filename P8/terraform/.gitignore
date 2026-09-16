@@ -1,0 +1,11 @@
+# Binarios de provider descargados por `terraform init` (se re-descargan
+# siempre igual a partir de .terraform.lock.hcl, que SI se versiona).
+.terraform/
+
+# Estado local (contiene datos del cluster efimero, nunca secretos reales
+# porque los secretos los gestiona Sealed Secrets, no Terraform -- pero de
+# todas formas no tiene sentido versionar el estado de un cluster kind
+# desechable).
+terraform.tfstate
+terraform.tfstate.*
+*.tfplan
