@@ -223,11 +223,23 @@ jobs:
   # Etapa 4: despliegue automatico a un cluster de Kubernetes efimero (kind)
   # levantado dentro del propio runner. Sin costo de nube, sin credenciales
   # externas: el cluster se crea, se prueba y se destruye en cada corrida.
+  #
+  # RETIRADO en la Practica 8: el chart de P6/charts/sa-platform evoluciono
+  # para el modelo GitOps de P8 (Deployment -> Rollout + AnalysisTemplate
+  # de Argo Rollouts, Namespace/RBAC/Secret movidos fuera del chart) -- un
+  # `helm upgrade --install` directo contra un kind "pelado" (sin el
+  # controlador de Argo Rollouts ni Terraform/Sealed Secrets) ya no puede
+  # funcionar ("no matches for kind Rollout/AnalysisTemplate"), y de todas
+  # formas violaria a proposito el requisito de P8 de que solo ArgoCD
+  # aplique cambios al cluster. El despliegue automatizado real ahora vive
+  # en .github/workflows/p8-gitops.yml (build-test -> docker-scan-sign ->
+  # PR contra sa-platform-gitops). Se deja este job deshabilitado (no
+  # eliminado) para conservar el historial de la Practica 7.
   # ---------------------------------------------------------------------
   deploy:
     name: Deploy a Kubernetes (kind efimero)
     needs: docker
-    if: github.event_name != 'pull_request'
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -417,6 +429,13 @@ jobs:
   # registro de esa version es la propia GitHub Release que este job crea:
   # queda listada en la pestana "Releases" del repositorio, con las 7
   # imagenes de Docker Hub que le corresponden a ese numero de version.
+  #
+  # NOTA (Practica 8): como "deploy" ahora esta deshabilitado (if: false,
+  # ver ese job), y GitHub Actions exige implicitamente success() en todos
+  # los "needs" salvo que se use always()/failure(), este job queda
+  # inactivo tambien (se saltaria) para cualquier tag p7-v*.*.* nuevo. El
+  # versionamiento por tag equivalente en P8 es el propio tag de imagen
+  # que calcula el job "docker-scan-sign" de p8-gitops.yml.
   # ---------------------------------------------------------------------
   release:
     name: Generar version (GitHub Release)

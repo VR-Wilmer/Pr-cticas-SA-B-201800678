@@ -227,7 +227,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
       - name: Trivy - bloquear ante CVE CRITICAL antes de publicar
-        uses: aquasecurity/[email protected]
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
           format: table
@@ -237,7 +237,7 @@ jobs:
 
       - name: Generar reporte completo de Trivy (evidencia, no bloqueante)
         if: always()
-        uses: aquasecurity/[email protected]
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
           format: json
@@ -245,7 +245,7 @@ jobs:
           exit-code: "0"
 
       - name: Generar SBOM (CycloneDX, requisito "Seguridad de la cadena de suministro")
-        uses: anchore/[email protected]
+        uses: anchore/sbom-action@v0.24.2
         with:
           image: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}
           format: cyclonedx-json
@@ -270,7 +270,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}
 
       - name: Instalar Cosign
-        uses: sigstore/[email protected]
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Firmar la imagen publicada (Cosign keyless/OIDC, sin llaves guardadas)
         run: |
