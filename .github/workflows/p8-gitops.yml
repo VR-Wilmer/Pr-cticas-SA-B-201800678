@@ -313,6 +313,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITOPS_REPO: VR-Wilmer/sa-platform-gitops
+      # Unica por CORRIDA (no solo por commit): un nombre atado solo al sha
+      # colisiona (non-fast-forward) si el workflow se re-ejecuta sobre el
+      # mismo commit (ej. un rerun manual, o un intento previo que abrio la
+      # rama pero fallo mas adelante) y el remoto ya tiene esa rama con
+      # otra historia.
+      BRANCH: bump-staging-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Clonar sa-platform-gitops
         run: |
@@ -320,7 +326,7 @@ jobs:
           cd gitops
           git config user.name "sa-platform-ci-bot"
           git config user.email "ci@sa-platform.local"
-          git checkout -b "bump-staging-${GITHUB_SHA::12}"
+          git checkout -b "$BRANCH"
 
       - name: Bump de image.tag en values-staging.yaml (yq, mikefarah/yq preinstalado en ubuntu-latest)
         run: |
@@ -341,17 +347,18 @@ jobs:
           set -euo pipefail
           cd gitops
           git add charts/sa-platform/values-staging.yaml
-          git commit -m "chore(staging): bump image tags - ${GITHUB_SHA::12}"
-          git push -u origin "bump-staging-${GITHUB_SHA::12}"
+          git commit -m "chore(staging): bump image tags - ${GITHUB_SHA::12} (run ${GITHUB_RUN_ID})"
+          git push -u origin "$BRANCH"
           gh pr create \
             --repo "${GITOPS_REPO}" \
             --title "Bump staging image tags (${GITHUB_SHA::12})" \
             --body "Generado automaticamente por .github/workflows/p8-gitops.yml del repo de codigo. Commit origen: ${GITHUB_SHA}." \
-            --base main
+            --base main \
+            --head "$BRANCH"
 
-      - name: Auto-mergear el PR de staging
+      - name: Auto-mergear el PR de staging (y borrar la rama)
         env:
           GH_TOKEN: ${{ secrets.GITOPS_PAT }}
         run: |
           cd gitops
-          gh pr merge --repo "${GITOPS_REPO}" --squash --auto "bump-staging-${GITHUB_SHA::12}"
+          gh pr merge --repo "${GITOPS_REPO}" --squash --auto --delete-branch "$BRANCH"
