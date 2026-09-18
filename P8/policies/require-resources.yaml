@@ -4,6 +4,14 @@
 # hace exigible tambien para cualquier Pod que no venga de ese chart
 # (ej. un Pod de depuracion desplegado a mano), cerrando el hueco que la
 # 1ra debilidad del enunciado describe ("el pipeline avanza a ciegas").
+#
+# Alcance: solo los namespaces de la APLICACION (sa-p8-staging/sa-p8-prod),
+# no el cluster entero. Los operadores de plataforma (ArgoCD, Argo
+# Rollouts, Kyverno, Sealed Secrets, instalados por Terraform en
+# platform.tf) NO estan sujetos a esta politica -- sus propios charts de
+# terceros no siempre declaran resources/limits ni corren como no-root, y
+# esta practica evalua la cadena de suministro de NUESTRA aplicacion, no
+# la de cada operador de infraestructura que instalamos.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -25,6 +33,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
       validate:
         message: "Todo contenedor debe declarar resources.requests y resources.limits de cpu y memory."
         pattern:

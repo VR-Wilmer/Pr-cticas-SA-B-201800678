@@ -2,7 +2,10 @@
 # privilegios de root -- nuestro propio chart ya lo hace (runAsNonRoot,
 # allowPrivilegeEscalation: false, capabilities drop ALL, ver
 # charts/common/templates/_workload.tpl), esta politica lo hace exigible
-# para cualquier Pod del cluster, no solo el nuestro.
+# para cualquier Pod de nuestros namespaces de aplicacion.
+#
+# Alcance: solo sa-p8-staging/sa-p8-prod, no los operadores de plataforma
+# (ver la misma nota en require-resources.yaml).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -24,6 +27,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
       validate:
         message: "El Pod y cada contenedor deben declarar runAsNonRoot: true y allowPrivilegeEscalation: false."
         anyPattern:

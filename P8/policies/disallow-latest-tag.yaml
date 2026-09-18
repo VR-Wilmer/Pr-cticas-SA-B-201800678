@@ -25,6 +25,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
       validate:
         message: "La imagen debe declarar un tag explicito (ej. \"1.2.3\" o el sha del commit)."
         pattern:
@@ -37,6 +40,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
       validate:
         message: >-
           El tag "latest" no esta permitido -- ver P7/docs (versionamiento

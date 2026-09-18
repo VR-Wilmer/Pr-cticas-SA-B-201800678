@@ -6,9 +6,12 @@
 # cluster en el momento de la admision -- no basta con que el pipeline la
 # haya firmado, el cluster tambien la exige antes de correr el Pod.
 #
-# IMPORTANTE: reemplazar <DOCKERHUB_USERNAME> por el usuario real de Docker
-# Hub (el mismo secret DOCKERHUB_USERNAME de P7/P8) antes de aplicar esta
-# politica -- ver P8/MANUAL_TECNICO.md.
+# El placeholder <DOCKERHUB_USERNAME> lo reemplaza automaticamente
+# Terraform (P8/terraform/policies.tf, con "replace()" sobre var.
+# dockerhub_username) al aplicar -- no hace falta editarlo a mano en este
+# archivo. Alcance: por el patron de "imageReferences" de abajo, esta
+# politica ya solo aplica a imagenes "sa-platform-*", nunca a los
+# operadores de plataforma.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -33,6 +36,9 @@ spec:
           - resources:
               kinds:
                 - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
       imageExtractors: {}
       verifyImages:
         - imageReferences:
