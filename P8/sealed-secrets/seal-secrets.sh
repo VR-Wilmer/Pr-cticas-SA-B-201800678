@@ -50,12 +50,21 @@ seal_secret() {
     literals+=(--from-literal="$kv")
   done
 
+  # kubeseal rechaza por defecto un Secret sin ninguna clave (ej. el de
+  # "gateway", que no tiene credenciales propias) -- hace falta
+  # --allow-empty-data explicitamente para ese caso, si no aborta y deja
+  # sin sellar todo lo que viniera despues en el script.
+  local empty_flag=()
+  if [ "${#literals[@]}" -eq 0 ]; then
+    empty_flag=(--allow-empty-data)
+  fi
+
   kubectl create secret generic "$name" \
     --namespace "$NAMESPACE" \
     --dry-run=client \
     -o yaml \
     "${literals[@]}" \
-  | kubeseal "${CERT_FLAG[@]}" --format yaml \
+  | kubeseal "${CERT_FLAG[@]}" "${empty_flag[@]}" --format yaml \
   > "${OUT_DIR}/${name}.yaml"
 
   echo "Sellado: ${OUT_DIR}/${name}.yaml"
