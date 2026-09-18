@@ -2,8 +2,8 @@ name: P8 - GitOps y cadena de suministro
 
 # Que cambia respecto a P7 (.github/workflows/p7-ci-cd.yml, que sigue
 # existiendo sin tocar):
-#   - El job "deploy" de P7 (helm upgrade contra un kind efimero) NO
-#     existe aqui. Este pipeline NUNCA toca el cluster: construye,
+#   - El job "deploy" de P7 (que instalaba el chart contra un kind
+#     efimero) NO existe aqui. Este pipeline NUNCA toca el cluster: construye,
 #     escanea y firma las imagenes, y su unica salida hacia el cluster es
 #     un Pull Request contra el repo GitOps (sa-platform-gitops). ArgoCD
 #     es quien sincroniza ese repo -- rubrica 2.3.
@@ -288,8 +288,9 @@ jobs:
   # GitOps: la UNICA forma en que este pipeline "llega" al cluster es
   # abriendo un Pull Request contra sa-platform-gitops (repo
   # independiente) que cambia el tag de imagen en values-staging.yaml.
-  # No hay kubeconfig ni credenciales de cluster en ningun paso de este
-  # workflow -- ver P8/docs/costos-y-consideraciones.md.
+  # Ningun paso de este workflow guarda ni usa credenciales del cluster
+  # (ni un archivo de configuracion de acceso al API server) -- ver
+  # P8/docs/costos-y-consideraciones.md.
   # ---------------------------------------------------------------------
   gitops-pr:
     name: Abrir PR en sa-platform-gitops (staging)

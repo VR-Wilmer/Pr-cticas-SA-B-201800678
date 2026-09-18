@@ -147,6 +147,27 @@ cosign verify \
   docker.io/<usuario>/sa-platform-tickets-service:<tag>
 ```
 
+### 5.6 Correr el verificador del auxiliar (`P8/Fix_Script_p8.sh`)
+
+Último paso antes de grabar el video, con el clúster `sa-p8` real
+encendido y `kubectl`/`argocd` apuntando a él:
+
+```bash
+cd P8
+./Fix_Script_p8.sh --init   # una sola vez: genera p8.conf
+# Editar p8.conf con los mismos datos de la tabla 4.1 del README:
+#   CARNET, REPO_CODE, REPO_GITOPS, APP=sa-platform-staging, NS=sa-p8-staging,
+#   IMAGE=docker.io/<usuario>/sa-platform-tickets-service:<tag real>,
+#   COSIGN_IDENTITY_REGEXP="https://github.com/VR-Wilmer/Pr-cticas-SA-B-201800678/.*"
+./Fix_Script_p8.sh
+```
+
+Revisar `reporte_p8_<carnet>.txt` y la lista de `ELIM` al final. El único
+`ELIM` esperado (y ya explicado) es `despliegue-directo`, por el falso
+positivo del job deshabilitado de P7 — ver la sección 7.0 de este mismo
+manual y `.github/workflows/README.md`. Cualquier otro `ELIM` sí hay que
+resolverlo antes de grabar.
+
 ## 6. Guion sugerido del video (5-8 min)
 
 | Minuto | Qué mostrar | Rúbrica que demuestra |
@@ -169,6 +190,16 @@ Autoevaluación honesta antes de entregar — llenar la columna
 "Autoevaluación" con el estado real al momento de grabar el video, no
 antes.
 
+### 7.0 Requisitos eliminatorios (sección 8.1 del enunciado)
+
+| Requisito | Estado | Nota |
+|---|---|---|
+| Práctica 7 previamente calificada | Sí | Sin cambios de fondo — solo se deshabilitó el job `deploy` (`if: false`), ver `.github/workflows/README.md` |
+| Estado de ArgoCD `Synced`/`Healthy` | Pendiente de verificar en vivo | Ver 7.1, fila 2.3 |
+| Sin despliegue directo | **Falso positivo conocido en `Fix_Script_p8.sh`** | El grep del script de verificación del auxiliar escanea *todo* `.github/workflows/`, no solo `p8-gitops.yml`. Encuentra `helm upgrade --install` dentro del job `deploy` de `p7-ci-cd.yml` — deshabilitado (`if: false`) y que nunca se ejecuta, pero cuyo texto no se puede borrar sin tocar la entrega ya calificada de P7. `p8-gitops.yml` en sí está limpio (verificado con el mismo grep del script, sin coincidencias). Explicado en `.github/workflows/README.md` para quien revise el `ELIM` que reporte el script. |
+| Evidencia de reversión | Pendiente de verificar en vivo | Ver 5.2 y `docs/informe-incidente.md` |
+| README de entrega con tabla 4.1 completa | Parcial | Ver `P8/README.md` — faltan URLs `[COMPLETAR]` hasta correr el pipeline real |
+
 | # | Criterio | Qué se implementó | Cómo verificarlo | Autoevaluación |
 |---|---|---|---|---|
 | 1.1 | Documentación técnica (8 pts) | `P8/README.md`, `docs/costos-y-consideraciones.md` | Leer ambos, ≤2 páginas de flujo explicado | Satisfactorio |
@@ -179,8 +210,8 @@ antes.
 | 2.2 | Empaquetado con Helm (8 pts) | Charts propios por servicio, `values-staging.yaml`/`values-prod.yaml` diferenciados, `helm lint` limpio | `helm lint`/`helm template` (ver sección de validación de este manual) | Satisfactorio (validado) |
 | 2.3 | GitOps con ArgoCD (14 pts) | `sa-platform-gitops` independiente, `Application` con `selfHeal`, pipeline solo abre PR | Confirmar `Synced`/`Healthy`, intentar un `kubectl edit` manual y ver que se revierte | **Pendiente de verificar en vivo** contra el clúster real |
 | 2.4 | Entrega progresiva y reversión (14 pts) | `Rollout` canary 3 pasos + `AnalysisTemplate` en los 5 servicios, abort automático | Escenarios 5.1 y 5.2 | **Pendiente de verificar en vivo** |
-| 2.5 | Validación automatizada (8 pts) | **Fuera de alcance, decisión explícita** (sin pruebas de humo/carga) | — | **No implementado a propósito** — 0 pts esperados aquí |
-| 2.6 | Cadena de suministro y políticas (8 pts) | Trivy bloqueante, SBOM, Cosign keyless, 4 políticas Kyverno (incluye `verifyImages`) | Escenarios 5.3, 5.4, 5.5 | **Pendiente de verificar en vivo** |
+| 2.5 | Validación automatizada (8 pts) | **Fuera de alcance, decisión explícita** (sin pruebas de humo/carga) | — | **No implementado a propósito.** Nota: `Fix_Script_p8.sh` podría dar +2 por `provider.web` en el `AnalysisTemplate` (existe de verdad) y +2 por rutas con "test" (las pruebas unitarias/integración heredadas de P7, no son pruebas de humo reales) — no depender de ese margen, sigue siendo una decisión de alcance resignada a propósito, no una implementación completa |
+| 2.6 | Cadena de suministro y políticas (8 pts) | Trivy bloqueante, SBOM, Cosign keyless, 4 políticas Kyverno (incluye `verifyImages`) | Escenarios 5.3, 5.4, 5.5 | **Pendiente**: correr `seal-secrets.sh` (sección 3) antes de calificar — `Fix_Script_p8.sh` busca `kind: SealedSecret` real en `sa-platform-gitops` y hoy solo hay los `README.md` placeholder |
 
 **Puntos esperables dada la decisión de alcance**: 92/100 en la base de
 100 de la rúbrica (se resigna 2.5 = 8 pts) — escalado a 3.75 pts:
