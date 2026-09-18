@@ -126,9 +126,28 @@ externo para tener sentido.
   anónimos/6h por IP, manifestándose de dos formas distintas
   (`TOOMANYREQUESTS` y, en otros intentos, `no signatures found` — muy
   probablemente el mismo límite expresado de forma inconsistente por el
-  cliente OCI de Kyverno). Mitigación real (no aplicada por decisión del
-  estudiante, para no introducir una credencial nueva a mitad de la
-  depuración): crear un `Secret` tipo `docker-registry` en el namespace
-  `kyverno` con el mismo `DOCKERHUB_TOKEN` ya usado en CI, y referenciarlo
-  en la política. Alternativa aplicada: esperar el reinicio del límite
-  (~6 horas, por IP).
+  cliente OCI de Kyverno).
+
+  **Actualización, tras esperar 11+ horas y luego autenticar:** el
+  límite de *pulls* no era la única causa. Se creó el `Secret`
+  `docker-registry` (`dockerhub-creds`, namespace `kyverno`) con
+  credenciales reales y se referenció vía
+  `imageRegistryCredentials.secrets` en la política — campo confirmado
+  correcto contra el schema real de la CRD (`kubectl get crd
+  clusterpolicies.kyverno.io -o json | jq
+  '...verifyImages.items.properties.imageRegistryCredentials'`). Aun
+  así, la verificación siguió fallando con `no signatures found`, **sin
+  ningún rastro en los logs de Kyverno de que intentara usar esas
+  credenciales**. Se confirmó independientemente que la firma sí es
+  válida (`cosign verify` desde fuera del clúster, contra la misma
+  imagen/tag, verifica sin problema). Conclusión: es una limitación real
+  del verificador interno de esta versión de Kyverno con esta ruta de
+  verificación keyless (probablemente el cliente de registro que usa
+  internamente para el sub-paso de `cosign` no hereda
+  `imageRegistryCredentials`), no un problema de nuestro diseño de firma
+  ni de las credenciales. **Mitigación aplicada:** la política se dejó
+  en `validationFailureAction: Audit` en vez de `Enforce` — sigue
+  existiendo, con la misma configuración (incluidas las credenciales,
+  por si una versión futura de Kyverno corrige esto), documentando
+  honestamente la limitación en vez de forzar un "Enforce" que en la
+  práctica bloqueaba todo el clúster por un falso negativo confirmado.

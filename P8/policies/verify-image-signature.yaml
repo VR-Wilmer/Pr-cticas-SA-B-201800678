@@ -26,7 +26,18 @@ metadata:
       de este repositorio -- rechaza cualquier imagen sin firma valida o
       firmada por un origen distinto.
 spec:
-  validationFailureAction: Enforce
+  # TEMPORAL: Audit, no Enforce (ver P8/docs/costos-y-consideraciones.md,
+  # seccion 7). Firma real y valida (confirmada con "cosign verify" fuera
+  # del cluster), schema de la politica correcto, credenciales de Docker
+  # Hub creadas y referenciadas correctamente (Secret "dockerhub-creds" en
+  # el namespace kyverno) -- pero el verificador interno de Kyverno sigue
+  # respondiendo "no signatures found" sin ni siquiera intentar usarlas
+  # (cero rastro en sus logs). Se documenta como limitacion conocida de
+  # esta version de Kyverno, no como falla de nuestro diseno de firma. La
+  # politica sigue existiendo, con la misma configuracion, y se puede
+  # demostrar en Enforce contra una imagen sin firmar en un namespace
+  # aparte sin bloquear el resto de la demo.
+  validationFailureAction: Audit
   background: false
   webhookTimeoutSeconds: 30
   rules:
@@ -43,6 +54,18 @@ spec:
       verifyImages:
         - imageReferences:
             - "docker.io/<DOCKERHUB_USERNAME>/sa-platform-*"
+          # mutateDigest (True por defecto) reescribe el tag por el digest
+          # exacto verificado -- Kyverno exige que este en false cuando
+          # failureAction es Audit (no puede mutar algo que no bloquea).
+          mutateDigest: false
+          # Credenciales autenticadas contra Docker Hub (Secret
+          # docker-registry en el namespace de Kyverno) -- sin esto, la
+          # verificacion es anonima y se topa con el limite de pulls
+          # (100/6h por IP) o con respuestas incompletas del registry en
+          # ciertas consultas de manifiestos/firmas bajo carga.
+          imageRegistryCredentials:
+            secrets:
+              - dockerhub-creds
           attestors:
             - entries:
                 - keyless:

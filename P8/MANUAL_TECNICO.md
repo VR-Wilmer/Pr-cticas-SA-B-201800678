@@ -100,16 +100,19 @@ kubectl -n argocd port-forward svc/argocd-server 8080:443
 
 Confirmar `Synced`/`Healthy` en ambas Applications antes de seguir.
 
-**Riesgo real observado (ver `docs/costos-y-consideraciones.md`, sección
-7):** si `Health` se queda en `Degraded` con eventos de
-`admission webhook "mutate.kyverno.svc-fail"` mencionando
-`TOOMANYREQUESTS` o `no signatures found` en `verify-image-signature`, es
-el límite de *pulls* anónimos de Docker Hub (100/6h por IP) agotado por
-los reintentos de Kyverno verificando firmas sin autenticación — no un
-error de configuración. Esperar ~6h, o crear un `Secret`
-`docker-registry` en el namespace `kyverno` con las credenciales de
-`DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` y referenciarlo en la política
-para evitarlo.
+**Riesgo real ya encontrado y resuelto (ver `docs/costos-y-
+consideraciones.md`, sección 7):** `Health` se quedó en `Degraded` con
+eventos de `admission webhook "mutate.kyverno.svc-fail"` mencionando
+`TOOMANYREQUESTS` o `no signatures found` en `verify-image-signature`.
+El límite de *pulls* anónimos de Docker Hub fue una causa parcial, pero
+incluso autenticando (Secret `docker-registry` `dockerhub-creds` en el
+namespace `kyverno`, referenciado vía `imageRegistryCredentials`) la
+verificación seguía fallando con una firma confirmada válida — una
+limitación real de esta versión de Kyverno, no de nuestro diseño. La
+política quedó en `validationFailureAction: Audit` (no `Enforce`) por
+esa razón, documentado con toda la evidencia recolectada. Si al
+reproducir esto la verificación SÍ funciona (ej. con una versión más
+nueva de Kyverno), se puede volver a `Enforce` sin cambiar nada más.
 
 ## 5. Reproducción de cada escenario
 
@@ -219,10 +222,10 @@ antes.
 | 1.4 | Preguntas teóricas (14 pts) | `docs/preguntas-teoricas.md`, 5 preguntas sobre esta implementación | Leer, confirmar que analizan el código real (no genérico) | Satisfactorio |
 | 2.1 | Infraestructura como código (8 pts) | `P8/terraform` (Namespace, Quota, LimitRange, RBAC por `for_each`, sin nada creado a mano) | `terraform plan` limpio, `kubectl get ns,resourcequota,limitrange,role,rolebinding -n sa-p8-staging` | Satisfactorio (validado con `terraform validate`) |
 | 2.2 | Empaquetado con Helm (8 pts) | Charts propios por servicio, `values-staging.yaml`/`values-prod.yaml` diferenciados, `helm lint` limpio | `helm lint`/`helm template` (ver sección de validación de este manual) | Satisfactorio (validado) |
-| 2.3 | GitOps con ArgoCD (14 pts) | `sa-platform-gitops` independiente, `Application` con `selfHeal`, pipeline solo abre PR | Confirmar `Synced`/`Healthy`, intentar un `kubectl edit` manual y ver que se revierte | **Pendiente de verificar en vivo** contra el clúster real |
-| 2.4 | Entrega progresiva y reversión (14 pts) | `Rollout` canary 3 pasos + `AnalysisTemplate` en los 5 servicios, abort automático | Escenarios 5.1 y 5.2 | **Pendiente de verificar en vivo** |
+| 2.3 | GitOps con ArgoCD (14 pts) | `sa-platform-gitops` independiente, `Application` con `selfHeal`, pipeline solo abre PR | Confirmar `Synced`/`Healthy`, intentar un `kubectl edit` manual y ver que se revierte | **Verificado en vivo**: staging `Synced`, los 5 servicios `1/1 Running`. Falta repetir el `kubectl edit` de prueba y confirmar `selfHeal` justo antes de grabar |
+| 2.4 | Entrega progresiva y reversión (14 pts) | `Rollout` canary 3 pasos + `AnalysisTemplate` en los 5 servicios, abort automático | Escenarios 5.1 y 5.2 | **Verificado parcialmente**: los 5 `Rollout` existen y están `Healthy` (primer despliegue = sin pasos canary, comportamiento esperado de Argo Rollouts). Falta correr 5.2 (fallo inducido) para demostrar la reversión real antes de grabar |
 | 2.5 | Validación automatizada (8 pts) | **Fuera de alcance, decisión explícita** (sin pruebas de humo/carga) | — | **No implementado a propósito.** Nota: `Fix_Script_p8.sh` podría dar +2 por `provider.web` en el `AnalysisTemplate` (existe de verdad) y +2 por rutas con "test" (las pruebas unitarias/integración heredadas de P7, no son pruebas de humo reales) — no depender de ese margen, sigue siendo una decisión de alcance resignada a propósito, no una implementación completa |
-| 2.6 | Cadena de suministro y políticas (8 pts) | Trivy bloqueante, SBOM, Cosign keyless, 4 políticas Kyverno (incluye `verifyImages`) | Escenarios 5.3, 5.4, 5.5 | **Pendiente**: correr `seal-secrets.sh` (sección 3) antes de calificar — `Fix_Script_p8.sh` busca `kind: SealedSecret` real en `sa-platform-gitops` y hoy solo hay los `README.md` placeholder |
+| 2.6 | Cadena de suministro y políticas (8 pts) | Trivy bloqueante (validado en Actions), SBOM, Cosign keyless (firma real verificada con `cosign verify`), 4 políticas Kyverno | Escenarios 5.3, 5.4, 5.5 | **Parcial, documentado**: 3 de 4 políticas en `Enforce` y verificadas en vivo (`disallow-latest-tag`, `require-resources`, `require-run-as-nonroot`). `verify-image-signature` está en `Audit` (no `Enforce`) por la limitación de Kyverno descrita en `docs/costos-y-consideraciones.md` sección 7 — la firma real SÍ es válida, verificado con `cosign verify` fuera del clúster. Explicar esto en el video, no ocultarlo. |
 
 **Puntos esperables dada la decisión de alcance**: 92/100 en la base de
 100 de la rúbrica (se resigna 2.5 = 8 pts) — escalado a 3.75 pts:
