@@ -1,0 +1,6 @@
+# Config local del verificador y sus salidas generadas -- no son
+# entregables del proyecto (igual criterio que secrets.local.yaml en P6):
+# se regeneran con "./Fix_Script_p8.sh --init" y cada corrida real.
+p8.conf
+reporte_p8_*.txt
+resultados_p8.csv

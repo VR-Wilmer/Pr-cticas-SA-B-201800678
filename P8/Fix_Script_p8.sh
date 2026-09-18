@@ -12,16 +12,16 @@ if [ "${1:-}" = "--init" ]; then
 # Datos de la entrega de la Practica 8.
 # Deben coincidir EXACTAMENTE con la tabla 4.1 del README de su entrega.
 
-CARNET="202012345"
-REPO_CODE="https://github.com/usuario/software-avanzado"
-REPO_GITOPS="https://github.com/usuario/software-avanzado-gitops"
-APP="mi-app-prod"                       # nombre de la aplicacion en ArgoCD
-NS="produccion"                         # namespace de la aplicacion
-IMAGE="ghcr.io/usuario/orders:1.4.2"    # imagen firmada, con tag concreto
+CARNET="201800678"
+REPO_CODE="https://github.com/VR-Wilmer/Pr-cticas-SA-B-201800678"
+REPO_GITOPS="https://github.com/VR-Wilmer/sa-platform-gitops"
+APP="sa-platform-staging"                              # nombre de la aplicacion en ArgoCD
+NS="sa-p8-staging"                                     # namespace de la aplicacion
+IMAGE="docker.io/wvasquezusac/sa-platform-tickets-service:ci-ae177b5889ae"  # completar tras el primer push+firma reales
 
 # Identidad con la que se firmo la imagen (Cosign keyless).
 # Si firma desde GitHub Actions, deje el issuer tal cual y ajuste el repositorio.
-COSIGN_IDENTITY_REGEXP="https://github.com/usuario/software-avanzado/.*"
+COSIGN_IDENTITY_REGEXP="https://github.com/VR-Wilmer/Pr-cticas-SA-B-201800678/.*"
 COSIGN_ISSUER="https://token.actions.githubusercontent.com"
 PLANTILLA
   echo "Creado $CONF. Llenelo y vuelva a ejecutar el script sin argumentos."

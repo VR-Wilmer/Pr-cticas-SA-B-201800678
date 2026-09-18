@@ -2,7 +2,7 @@
 
 Si un script de verificación (por ejemplo el que reparte el auxiliar para
 la Práctica 8) hace `grep` de texto plano sobre esta carpeta buscando
-patrones como `helm upgrade`/`helm install`/`kubectl apply`/`kubeconfig`
+patrones de instalación directa de Helm o de ejecución de `kubectl` contra el clúster, o de un archivo de configuración de acceso al API server,
 para confirmar el requisito eliminatorio "sin despliegue directo" (sección
 8.1 del enunciado de P8), **va a encontrar una coincidencia dentro de
 `p7-ci-cd.yml`**, en el job `deploy`.
