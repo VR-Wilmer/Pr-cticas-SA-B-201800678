@@ -278,11 +278,25 @@ jobs:
             "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}"
 
       - name: Verificar la firma (comprobacion in-pipeline, ademas de la que hace Kyverno en el cluster)
+        # Docker Hub tarda unos segundos en dejar la firma recien publicada
+        # disponible para busqueda (propagacion del registry) -- "cosign
+        # verify" corriendo segundos despues de "cosign sign" falla de forma
+        # intermitente con "no signatures found" aunque la firma si se
+        # publico. Reintenta con backoff antes de dar el job por fallido.
         run: |
-          cosign verify \
-            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-            "docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}"
+          IMG="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ steps.tag.outputs.version }}"
+          for intento in 1 2 3 4 5 6; do
+            if cosign verify \
+                --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" \
+                --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+                "$IMG"; then
+              exit 0
+            fi
+            echo "Intento $intento sin exito (posible propagacion del registry), reintentando en 10s..."
+            sleep 10
+          done
+          echo "::error::cosign verify siguio fallando tras varios reintentos"
+          exit 1
 
   # ---------------------------------------------------------------------
   # GitOps: la UNICA forma en que este pipeline "llega" al cluster es
