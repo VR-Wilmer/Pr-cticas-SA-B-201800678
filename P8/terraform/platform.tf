@@ -9,6 +9,59 @@
 # P8/docs/costos-y-consideraciones.md para el detalle de este limite de
 # alcance.
 
+resource "kubernetes_namespace" "ingress_nginx" {
+  metadata {
+    name = "ingress-nginx"
+  }
+}
+
+resource "helm_release" "ingress_nginx" {
+  # El gateway declara un Ingress (charts/common/templates/_service.tpl,
+  # requisito E de P5/P6) -- sin un controlador real, ArgoCD nunca puede
+  # marcar ese recurso como "Healthy" y el sync completo queda esperando
+  # indefinidamente. Mismo criterio que P7 (P7/docs/costos-y-
+  # consideraciones.md): ClusterIP, no LoadBalancer, para no depender de
+  # un proveedor de nube -- en un kind local basta con exponer el puerto
+  # via kind-config.yaml (P8/ci/kind-config.yaml, hostPort 80/443).
+  name       = "ingress-nginx"
+  repository = "https://kubernetes.github.io/ingress-nginx"
+  chart      = "ingress-nginx"
+  namespace  = kubernetes_namespace.ingress_nginx.metadata[0].name
+
+  set {
+    name  = "controller.hostPort.enabled"
+    value = "true"
+  }
+  set {
+    name  = "controller.service.type"
+    value = "ClusterIP"
+  }
+  set {
+    name  = "controller.watchIngressWithoutClass"
+    value = "true"
+  }
+  # El unico nodo del cluster kind es el control-plane (taint
+  # NoSchedule por defecto) -- mismo criterio que P7 para poder
+  # programar el controller ahi.
+  set {
+    name  = "controller.nodeSelector.ingress-ready"
+    value = "true"
+    type  = "string" # sin esto Helm lo interpreta como bool, no como el string "true" que nodeSelector espera
+  }
+  set {
+    name  = "controller.tolerations[0].key"
+    value = "node-role.kubernetes.io/control-plane"
+  }
+  set {
+    name  = "controller.tolerations[0].operator"
+    value = "Equal"
+  }
+  set {
+    name  = "controller.tolerations[0].effect"
+    value = "NoSchedule"
+  }
+}
+
 resource "kubernetes_namespace" "argocd" {
   metadata {
     name = "argocd"
