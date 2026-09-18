@@ -64,8 +64,11 @@ resource "kubernetes_namespace" "sealed_secrets" {
 }
 
 resource "helm_release" "sealed_secrets" {
-  name       = "sealed-secrets"
-  repository = "https://bitnami-labs.github.io/sealed-secrets"
+  name = "sealed-secrets"
+  # El repo de GitHub (y su Helm repo servido por GitHub Pages) se movio de
+  # bitnami-labs/sealed-secrets a bitnami/sealed-secrets -- la URL vieja
+  # responde 404 desde entonces.
+  repository = "https://bitnami.github.io/sealed-secrets"
   chart      = "sealed-secrets"
   namespace  = kubernetes_namespace.sealed_secrets.metadata[0].name
 

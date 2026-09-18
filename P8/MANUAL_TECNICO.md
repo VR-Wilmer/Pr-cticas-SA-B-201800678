@@ -17,7 +17,7 @@ anteriores):
 | `kubectl-argo-rollouts` (plugin) | Ver el estado del canary (`kubectl argo rollouts get rollout ...`) | Binario desde GitHub Releases de `argoproj/argo-rollouts` |
 | `helm` | Empaquetado (ya usado en P5/P6) | `mise use helm` o binario oficial |
 | `terraform` | IaC del clúster (`P8/terraform`) | `mise use terraform` o binario de HashiCorp |
-| `kubeseal` | Sellar secretos | Binario desde GitHub Releases de `bitnami-labs/sealed-secrets`, versión que coincida con el `helm_release.sealed_secrets` de `P8/terraform/platform.tf` |
+| `kubeseal` | Sellar secretos | Binario desde GitHub Releases de `bitnami/sealed-secrets` (el repo se movió desde `bitnami-labs/sealed-secrets`), versión que coincida con el `helm_release.sealed_secrets` de `P8/terraform/platform.tf` |
 | `cosign` | Firmar/verificar imágenes | Binario desde GitHub Releases de `sigstore/cosign` |
 | `argocd` (CLI, opcional) | Alternativa a la UI web | Binario desde GitHub Releases de `argoproj/argo-cd` |
 | `gh` | Abrir PRs, crear el repo GitOps | Ya usado en prácticas anteriores |
