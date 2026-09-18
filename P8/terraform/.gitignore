@@ -9,3 +9,7 @@
 terraform.tfstate
 terraform.tfstate.*
 *.tfplan
+
+# YAML generado por argocd-apps.tf (local_file) antes de aplicarlo con
+# kubectl -- se regenera siempre igual desde el HCL, no es codigo fuente.
+.generated/

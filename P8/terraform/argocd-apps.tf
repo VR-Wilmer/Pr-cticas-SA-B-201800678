@@ -1,19 +1,22 @@
-# Bootstrap de las 2 Application de ArgoCD, tambien como Terraform (no un
-# `kubectl apply -f` manual): es el unico punto de "arranque en frio" del
-# modelo GitOps (alguien tiene que decirle a ArgoCD, la primera vez, que
-# repo sincronizar) -- una vez creadas estas 2 Application, CUALQUIER
-# cambio posterior (nuevo tag de imagen, cambio de values) lo aplica
-# unicamente ArgoCD, nunca Terraform ni el pipeline. Ver
-# P8/docs/costos-y-consideraciones.md seccion 4.
+# Bootstrap de las 2 Application de ArgoCD. Se intento primero con
+# "kubernetes_manifest" (recurso nativo de Terraform para CRDs), pero el
+# provider de Kubernetes tiene un bug conocido con el schema de
+# "Application" de ArgoCD: cada elemento de "spec.sources[]" tiene
+# distintas claves segun el tipo de fuente (helm vs directory), y el
+# provider no logra unificar el tipo de la lista ("Failed to update
+# proposed state from prior state") ni agregando las claves
+# complementarias en null. En vez de seguir peleando con esa limitacion
+# conocida, se genera el YAML con Terraform (local_file) y se aplica con
+# "kubectl apply" (null_resource + local-exec) -- sigue siendo
+# declarativo y reproducible, solo cambia el mecanismo de aplicacion.
+# Una vez creadas, cualquier cambio posterior (nuevo tag de imagen,
+# cambio de values) lo aplica unicamente ArgoCD, nunca Terraform ni el
+# pipeline.
 
-locals {
-  argocd_app_group   = "argoproj.io"
-  argocd_app_version = "v1alpha1"
-}
-
-resource "kubernetes_manifest" "argocd_app_staging" {
-  manifest = {
-    apiVersion = "${local.argocd_app_group}/${local.argocd_app_version}"
+resource "local_file" "argocd_app_staging" {
+  filename = "${path.module}/.generated/application-staging.yaml"
+  content = yamlencode({
+    apiVersion = "argoproj.io/v1alpha1"
     kind       = "Application"
     metadata = {
       name      = "sa-platform-staging"
@@ -21,12 +24,6 @@ resource "kubernetes_manifest" "argocd_app_staging" {
     }
     spec = {
       project = "default"
-      # Los 2 elementos de "sources" deben tener EXACTAMENTE las mismas
-      # claves (aunque sea en null) -- kubernetes_manifest necesita que
-      # todos los elementos de una lista tengan el mismo tipo HCL antes de
-      # compararlos contra el schema de la CRD, y "helm"/"directory" no
-      # se auto-rellenan solos (error real: "Failed to update proposed
-      # state from prior state" si se omiten).
       sources = [
         {
           repoURL        = var.gitops_repo_url
@@ -35,13 +32,11 @@ resource "kubernetes_manifest" "argocd_app_staging" {
           helm = {
             valueFiles = ["values.yaml", "values-staging.yaml"]
           }
-          directory = null
         },
         {
           repoURL        = var.gitops_repo_url
           targetRevision = "main"
           path           = "sealed-secrets/staging"
-          helm           = null
           directory = {
             recurse = false
             exclude = "README.md"
@@ -57,14 +52,23 @@ resource "kubernetes_manifest" "argocd_app_staging" {
         syncOptions = ["CreateNamespace=false"]
       }
     }
-  }
-
-  depends_on = [helm_release.argocd, module.staging]
+  })
 }
 
-resource "kubernetes_manifest" "argocd_app_prod" {
-  manifest = {
-    apiVersion = "${local.argocd_app_group}/${local.argocd_app_version}"
+resource "null_resource" "argocd_app_staging_apply" {
+  triggers = {
+    content_sha = sha256(local_file.argocd_app_staging.content)
+  }
+  provisioner "local-exec" {
+    command = "kubectl --context ${var.kube_context} apply -f ${local_file.argocd_app_staging.filename}"
+  }
+  depends_on = [helm_release.argocd, module.staging, local_file.argocd_app_staging]
+}
+
+resource "local_file" "argocd_app_prod" {
+  filename = "${path.module}/.generated/application-prod.yaml"
+  content = yamlencode({
+    apiVersion = "argoproj.io/v1alpha1"
     kind       = "Application"
     metadata = {
       name      = "sa-platform-prod"
@@ -80,13 +84,11 @@ resource "kubernetes_manifest" "argocd_app_prod" {
           helm = {
             valueFiles = ["values.yaml", "values-prod.yaml"]
           }
-          directory = null
         },
         {
           repoURL        = var.gitops_repo_url
           targetRevision = "main"
           path           = "sealed-secrets/prod"
-          helm           = null
           directory = {
             recurse = false
             exclude = "README.md"
@@ -102,7 +104,15 @@ resource "kubernetes_manifest" "argocd_app_prod" {
         syncOptions = ["CreateNamespace=false"]
       }
     }
-  }
+  })
+}
 
-  depends_on = [helm_release.argocd, module.prod]
+resource "null_resource" "argocd_app_prod_apply" {
+  triggers = {
+    content_sha = sha256(local_file.argocd_app_prod.content)
+  }
+  provisioner "local-exec" {
+    command = "kubectl --context ${var.kube_context} apply -f ${local_file.argocd_app_prod.filename}"
+  }
+  depends_on = [helm_release.argocd, module.prod, local_file.argocd_app_prod]
 }
