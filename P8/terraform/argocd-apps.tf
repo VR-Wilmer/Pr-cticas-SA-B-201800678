@@ -21,6 +21,12 @@ resource "kubernetes_manifest" "argocd_app_staging" {
     }
     spec = {
       project = "default"
+      # Los 2 elementos de "sources" deben tener EXACTAMENTE las mismas
+      # claves (aunque sea en null) -- kubernetes_manifest necesita que
+      # todos los elementos de una lista tengan el mismo tipo HCL antes de
+      # compararlos contra el schema de la CRD, y "helm"/"directory" no
+      # se auto-rellenan solos (error real: "Failed to update proposed
+      # state from prior state" si se omiten).
       sources = [
         {
           repoURL        = var.gitops_repo_url
@@ -29,11 +35,13 @@ resource "kubernetes_manifest" "argocd_app_staging" {
           helm = {
             valueFiles = ["values.yaml", "values-staging.yaml"]
           }
+          directory = null
         },
         {
           repoURL        = var.gitops_repo_url
           targetRevision = "main"
           path           = "sealed-secrets/staging"
+          helm           = null
           directory = {
             recurse = false
             exclude = "README.md"
@@ -72,11 +80,13 @@ resource "kubernetes_manifest" "argocd_app_prod" {
           helm = {
             valueFiles = ["values.yaml", "values-prod.yaml"]
           }
+          directory = null
         },
         {
           repoURL        = var.gitops_repo_url
           targetRevision = "main"
           path           = "sealed-secrets/prod"
+          helm           = null
           directory = {
             recurse = false
             exclude = "README.md"
