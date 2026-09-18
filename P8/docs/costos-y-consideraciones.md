@@ -96,3 +96,39 @@ externo para tener sentido.
   dos clústeres — confirmado con el auxiliar: el canary no es un ambiente,
   es la versión candidata conviviendo con la estable dentro del mismo
   ambiente.
+
+## 7. Hallazgos reales al levantar el clúster local (no solo teoría)
+
+- **Desfase entre el chart de Bitnami (actual) y la imagen
+  `bitnamilegacy/postgresql:16` (congelada desde 2025):** el chart
+  16.7.27 genera, a partir de `auth.existingSecret`, las variables
+  `POSTGRES_POSTGRES_PASSWORD_FILE`/`POSTGRES_PASSWORD_FILE` (sin "QL"),
+  pero el entrypoint de esa imagen legacy solo resuelve automáticamente
+  variables `_FILE` con el nombre `POSTGRESQL_*` (con "QL") — confirmado
+  leyendo `/opt/bitnami/scripts/postgresql-env.sh` dentro del propio
+  contenedor. Resultado real: `initdb` dejaba al superusuario `postgres`
+  sin contraseña funcional, y el script de `primary.initdb.scripts`
+  (que se conecta como `postgres` vía `psql`) fallaba con
+  `password authentication failed`, con el pod en `CrashLoopBackOff`
+  indefinido. Se resolvió forzando `POSTGRESQL_POSTGRES_PASSWORD`,
+  `POSTGRESQL_PASSWORD` y `POSTGRESQL_INITSCRIPTS_PASSWORD` vía
+  `primary.extraEnvVars` + `secretKeyRef` sobre el mismo Secret sellado
+  — nunca en texto plano. Lección: con una imagen "legacy" congelada, no
+  asumir que el chart más reciente y la imagen hablan exactamente el
+  mismo dialecto de variables de entorno; verificar contra el contenedor
+  real cuando algo persistido "de más" (el chart trataba el volumen
+  como si ya tuviera datos) enmascara el síntoma.
+- **Límite de *pulls* anónimos de Docker Hub al verificar firmas desde el
+  clúster:** Kyverno (`verify-image-signature`) consulta Docker Hub sin
+  autenticación para verificar la firma keyless de cada imagen. Durante
+  una sesión larga de depuración (varios reintentos de `ReplicaSet` por
+  cada rechazo de admisión), esto agotó el límite de 100 *pulls*
+  anónimos/6h por IP, manifestándose de dos formas distintas
+  (`TOOMANYREQUESTS` y, en otros intentos, `no signatures found` — muy
+  probablemente el mismo límite expresado de forma inconsistente por el
+  cliente OCI de Kyverno). Mitigación real (no aplicada por decisión del
+  estudiante, para no introducir una credencial nueva a mitad de la
+  depuración): crear un `Secret` tipo `docker-registry` en el namespace
+  `kyverno` con el mismo `DOCKERHUB_TOKEN` ya usado en CI, y referenciarlo
+  en la política. Alternativa aplicada: esperar el reinicio del límite
+  (~6 horas, por IP).

@@ -100,6 +100,17 @@ kubectl -n argocd port-forward svc/argocd-server 8080:443
 
 Confirmar `Synced`/`Healthy` en ambas Applications antes de seguir.
 
+**Riesgo real observado (ver `docs/costos-y-consideraciones.md`, sección
+7):** si `Health` se queda en `Degraded` con eventos de
+`admission webhook "mutate.kyverno.svc-fail"` mencionando
+`TOOMANYREQUESTS` o `no signatures found` en `verify-image-signature`, es
+el límite de *pulls* anónimos de Docker Hub (100/6h por IP) agotado por
+los reintentos de Kyverno verificando firmas sin autenticación — no un
+error de configuración. Esperar ~6h, o crear un `Secret`
+`docker-registry` en el namespace `kyverno` con las credenciales de
+`DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` y referenciarlo en la política
+para evitarlo.
+
 ## 5. Reproducción de cada escenario
 
 ### 5.1 Promoción canary exitosa
