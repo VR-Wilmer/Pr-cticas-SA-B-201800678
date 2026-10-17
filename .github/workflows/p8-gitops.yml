@@ -359,6 +359,13 @@ jobs:
       - name: Auto-mergear el PR de staging (y borrar la rama)
         env:
           GH_TOKEN: ${{ secrets.GITOPS_PAT }}
+        # Practica 10: "--auto" solo se puede programar si el PR tiene
+        # requisitos pendientes (checks obligatorios / proteccion de rama).
+        # sa-platform-gitops no los tiene -- la puerta de calidad de staging
+        # es el canary gobernado por metricas, no un check del PR -- asi que
+        # GitHub responde "Pull request is in clean status" y el job fallaba.
+        # Si el PR ya es fusionable, se fusiona directamente.
         run: |
           cd gitops
-          gh pr merge --repo "${GITOPS_REPO}" --squash --auto --delete-branch "$BRANCH"
+          gh pr merge --repo "${GITOPS_REPO}" --squash --auto --delete-branch "$BRANCH" \
+            || gh pr merge --repo "${GITOPS_REPO}" --squash --delete-branch "$BRANCH"
