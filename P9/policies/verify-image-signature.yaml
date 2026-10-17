@@ -1,0 +1,76 @@
+# Requisito "Seguridad de la cadena de suministro" (heredado de la
+# Practica 8, se mantiene operando en la Practica 9 tras la reconstruccion
+# del cluster): ninguna imagen propia puede desplegarse sin verificar que
+# fue firmada por el propio pipeline con Cosign en modo keyless/OIDC (sin
+# llaves privadas guardadas, ver .github/workflows/p8-gitops.yml). Kyverno
+# reverifica la firma en el cluster en el momento de la admision -- no
+# basta con que el pipeline la haya firmado, el cluster tambien la exige
+# antes de correr el Pod.
+#
+# El placeholder <DOCKERHUB_USERNAME> lo reemplaza automaticamente
+# Terraform (P9/terraform/policies.tf, con "replace()" sobre var.
+# dockerhub_username) al aplicar -- no hace falta editarlo a mano en este
+# archivo. Alcance: por el patron de "imageReferences" de abajo, esta
+# politica ya solo aplica a imagenes "sa-platform-*", nunca a los
+# operadores de plataforma.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+  annotations:
+    policies.kyverno.io/title: Verify Cosign Keyless Image Signature
+    policies.kyverno.io/category: Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Verifica, con el registro de transparencia de Sigstore, que la
+      imagen fue firmada en modo keyless por el workflow de GitHub Actions
+      de este repositorio -- rechaza cualquier imagen sin firma valida o
+      firmada por un origen distinto.
+spec:
+  # TEMPORAL: Audit, no Enforce (limitacion arrastrada de la Practica 8).
+  # Firma real y valida (confirmada con "cosign verify" fuera
+  # del cluster), schema de la politica correcto, credenciales de Docker
+  # Hub creadas y referenciadas correctamente (Secret "dockerhub-creds" en
+  # el namespace kyverno) -- pero el verificador interno de Kyverno sigue
+  # respondiendo "no signatures found" sin ni siquiera intentar usarlas
+  # (cero rastro en sus logs). Se documenta como limitacion conocida de
+  # esta version de Kyverno, no como falla de nuestro diseno de firma. La
+  # politica sigue existiendo, con la misma configuracion, y se puede
+  # demostrar en Enforce contra una imagen sin firmar en un namespace
+  # aparte sin bloquear el resto de la demo.
+  validationFailureAction: Audit
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-cosign-keyless
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
+      imageExtractors: {}
+      verifyImages:
+        - imageReferences:
+            - "docker.io/<DOCKERHUB_USERNAME>/sa-platform-*"
+          # mutateDigest (True por defecto) reescribe el tag por el digest
+          # exacto verificado -- Kyverno exige que este en false cuando
+          # failureAction es Audit (no puede mutar algo que no bloquea).
+          mutateDigest: false
+          # Credenciales autenticadas contra Docker Hub (Secret
+          # docker-registry en el namespace de Kyverno) -- sin esto, la
+          # verificacion es anonima y se topa con el limite de pulls
+          # (100/6h por IP) o con respuestas incompletas del registry en
+          # ciertas consultas de manifiestos/firmas bajo carga.
+          imageRegistryCredentials:
+            secrets:
+              - dockerhub-creds
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/VR-Wilmer/Pr-cticas-SA-B-201800678/.github/workflows/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev

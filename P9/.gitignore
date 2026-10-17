@@ -1,0 +1,5 @@
+# Credenciales generadas localmente, nunca en texto plano en el repo.
+infra/.minio.env
+infra/.mc/
+
+# Ver terraform/.gitignore para el estado de Terraform y lo generado.

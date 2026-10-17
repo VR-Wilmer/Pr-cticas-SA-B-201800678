@@ -1,0 +1,53 @@
+# Requisito "Politicas como codigo" #1 (Practica 8): ninguna imagen puede
+# desplegarse con el tag "latest" ni sin tag explicito -- el versionamiento
+# semantico (P7) deja de ser solo una convencion y pasa a ser una regla que
+# el cluster hace cumplir en el momento de la admision, no solo en el
+# pipeline.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Bloquea cualquier Pod (o Pod administrado por Rollout/Deployment/
+      CronJob) cuya imagen no declare un tag explicito distinto de
+      "latest".
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
+      validate:
+        message: "La imagen debe declarar un tag explicito (ej. \"1.2.3\" o el sha del commit)."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: disallow-latest-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
+      validate:
+        message: >-
+          El tag "latest" no esta permitido -- ver P7/docs
+          (versionamiento semantico).
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"

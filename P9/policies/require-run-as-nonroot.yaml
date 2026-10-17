@@ -1,0 +1,46 @@
+# Requisito "Politicas como codigo" #3 (Practica 8): ejecucion sin
+# privilegios de root -- nuestro propio chart ya lo hace (runAsNonRoot,
+# allowPrivilegeEscalation: false, capabilities drop ALL, ver
+# charts/common/templates/_workload.tpl), esta politica lo hace exigible
+# para cualquier Pod de nuestros namespaces de aplicacion.
+#
+# Alcance: solo sa-p8-staging/sa-p8-prod, no los operadores de plataforma
+# (ver la misma nota en require-resources.yaml).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-run-as-nonroot
+  annotations:
+    policies.kyverno.io/title: Require Run As Non-Root
+    policies.kyverno.io/category: Practica 8 - Cadena de suministro
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Bloquea cualquier Pod que no declare runAsNonRoot=true y
+      allowPrivilegeEscalation=false, a nivel de Pod o de cada contenedor.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-run-as-non-root
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - sa-p8-staging
+                - sa-p8-prod
+      validate:
+        message: "El Pod y cada contenedor deben declarar runAsNonRoot: true y allowPrivilegeEscalation: false."
+        anyPattern:
+          - spec:
+              securityContext:
+                runAsNonRoot: true
+              containers:
+                - securityContext:
+                    allowPrivilegeEscalation: false
+          - spec:
+              containers:
+                - securityContext:
+                    runAsNonRoot: true
+                    allowPrivilegeEscalation: false

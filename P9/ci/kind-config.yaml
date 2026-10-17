@@ -1,0 +1,45 @@
+# Config de kind para el cluster local "sa-p9" (ver P9/MANUAL_TECNICO.md)
+# -- misma receta base que P7/ci/kind-config.yaml y P8/ci/kind-config.yaml
+# (mapea 80/443 del nodo al host para llegar al Ingress/ArgoCD UI con un
+# curl/navegador normal). A diferencia de P8, este cluster se destruye y
+# reconstruye por diseno como parte de la prueba de recuperacion, no solo
+# se apaga entre sesiones -- bootstrap.sh es el unico punto de entrada
+# para levantarlo de nuevo.
+#
+# Nodos: 1 control-plane + 2 workers. Los workers son los que reciben las
+# cargas de la aplicacion (el control-plane solo corre ingress-nginx, fijo
+# ahi via nodeSelector+tolerations en terraform/platform.tf) -- con 2
+# workers, la anti-afinidad "preferred" de tickets-service/gateway
+# (sa-platform-gitops, charts/common/templates/_workload.tpl) reparte sus
+# 2 replicas una por worker, y la prueba de perdida de nodo (Fase 4)
+# consiste en drenar uno de los dos sin tumbar el servicio.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: sa-p9
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Puertos distintos a los de P8 (80/443/8080) a proposito: los dos
+      # clusters (sa-p8, que queda intacto, y sa-p9) corren en el mismo
+      # host al mismo tiempo, y `docker run -p` no permite dos procesos
+      # escuchando el mismo puerto del host (confirmado con el error real
+      # "port is already allocated" al intentar reusar 80/443).
+      - containerPort: 80
+        hostPort: 8081
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 8444
+        protocol: TCP
+      # Puerto adicional para exponer la UI de ArgoCD localmente durante
+      # la calificacion (port-forward hacia argocd-server, ver manual).
+      - containerPort: 30080
+        hostPort: 8082
+        protocol: TCP
+  - role: worker
+  - role: worker
