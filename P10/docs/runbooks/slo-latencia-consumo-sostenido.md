@@ -4,7 +4,7 @@
 |---|---|
 | **Severidad** | `ticket`: horario laboral |
 | **SLO** | Latencia: 99 % en menos de 1 s, ventana de 30 días ([slo.md](../slo.md)) |
-| **Condición** | `slo:burnrate:6h{slo="latencia"} > 6` **y** `slo:burnrate:30m{slo="latencia"} > 6`, sostenido 15 min |
+| **Condición** | `slo:burnrate:6h{slo="latencia"} > 6` **y** `slo:burnrate:30m{slo="latencia"} > 6` **y** `slo:burnrate:5m > 6` (agregada tras el fallo B, ver informe de operación), sostenido 15 min |
 
 ## Qué significa
 

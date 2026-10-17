@@ -15,9 +15,8 @@ correlacionados. Con ellos gobierna dos cosas:
 Todo el stack de observabilidad se despliega por el flujo GitOps de la
 Práctica 8; nada se instala a mano.
 
-> **Estado:** en curso. Ver la sección "Pendientes" al final. Los datos de
-> esta página son mediciones reales del clúster `sa-p10`; no hay valores
-> estimados.
+> **Estado:** completo, salvo la URL del video. Los datos de esta página
+> son mediciones reales del clúster `sa-p10`; no hay valores estimados.
 
 ## 4.1 Tabla de enlaces obligatoria
 
@@ -30,10 +29,10 @@ Práctica 8; nada se instala a mano.
 | Consultas del análisis | Ver [Consultas del análisis](#consultas-del-análisis-promql): tráfico > 0, tasa de 5xx < 5 % y p95 < 500 ms sobre `rollouts_pod_template_hash` de la candidata |
 | SLO declarados | **Disponibilidad:** 99.5 % de las peticiones a `/api/*` sin 5xx, ventana de 30 días. **Latencia:** 99 % de las peticiones en menos de 1 s, ventana de 30 días. Justificación en [`docs/slo.md`](docs/slo.md) |
 | Reglas de alerta | PrometheusRule `sa-platform-slo`: [`sa-platform-gitops/observabilidad/manifests/prometheusrule-slo.yaml`](https://github.com/VR-Wilmer/sa-platform-gitops/blob/main/observabilidad/manifests/prometheusrule-slo.yaml) |
-| Tablero | [`P10/dashboards/tablero-operacion.json`](dashboards/tablero-operacion.json) (también desplegado por GitOps como ConfigMap) |
+| Tablero | [`P10/dashboards/tablero-operacion.json`](dashboards/tablero-operacion.json) (también desplegado por GitOps como ConfigMap). Captura en operación, durante el fallo B: [`docs/evidencia/tablero-operacion-incidente.png`](docs/evidencia/tablero-operacion-incidente.png) |
 | Reversión por métricas | AnalysisRun **`tickets-service-5b8d5c8684-5-2`** (Failed, `latencia-p95` = 2.32 s) del Rollout **`tickets-service`**. Evidencia: [`docs/evidencia/canary-reversion-metricas.md`](docs/evidencia/canary-reversion-metricas.md) |
-| Recorrido síntoma a causa | **PENDIENTE**: [`docs/evidencia/sintoma-a-causa.md`](docs/evidencia/sintoma-a-causa.md), con el tiempo medido |
-| Video demostrativo | **PENDIENTE**: URL y minutaje |
+| Recorrido síntoma a causa | [`docs/evidencia/sintoma-a-causa.md`](docs/evidencia/sintoma-a-causa.md). Fallo B (permisos revocados en Postgres): primera señal **25 s**, alerta en firing **6 min 20 s**, recorrido alerta → traza → registro **2.4 s** con consultas (el recorrido manual en Grafana se cronometra en el video), recuperación **58 s** tras mitigar |
+| Video demostrativo | **URL: _(pegar aquí al subir el video)_**. Minutaje planificado en [`docs/guion-video.md`](docs/guion-video.md): 0:00 contexto · 0:40 GitOps · 1:30 trazas y correlación · 2:30 registros por campo · 3:10 tablero y SLO · 4:00 canary por métricas · 5:30 alerta y recorrido síntoma → causa · 7:00 informe |
 
 ## Dónde está cada cosa
 
@@ -157,10 +156,20 @@ sigue legible.
 | `verificar_p10.sh` (oficial) | 45/60: pierde 2.2 y 2.3 solo por el bug `${VAR:-{}}` | `analisis-sin-prometheus` (falso, por el mismo bug) |
 | `verificacion/verificar_p10_corregido.sh` | 60/60 | ninguno |
 
-## Pendientes
+## Documentos de la entrega
 
-- [ ] Fallo inducido B y recorrido cronometrado alerta → traza → registro (`docs/evidencia/sintoma-a-causa.md`).
-- [ ] Informe de operación (`docs/informe-operacion.md`, plantilla 4.2, máximo 2 páginas).
-- [ ] Captura del tablero en operación.
-- [ ] Video de 5 a 8 minutos con minutaje.
-- [ ] Repositorio de código público y rama fusionada en `master`.
+| Entregable | Archivo |
+|---|---|
+| Definición de SLO | [`docs/slo.md`](docs/slo.md) |
+| Reglas de alerta + runbooks | [PrometheusRule](https://github.com/VR-Wilmer/sa-platform-gitops/blob/main/observabilidad/manifests/prometheusrule-slo.yaml) · [`docs/runbooks/`](docs/runbooks/) (4) |
+| Evidencia del canary | [`docs/evidencia/canary-reversion-metricas.md`](docs/evidencia/canary-reversion-metricas.md) |
+| Evidencia síntoma a causa | [`docs/evidencia/sintoma-a-causa.md`](docs/evidencia/sintoma-a-causa.md) |
+| Informe de operación | [`docs/informe-operacion.md`](docs/informe-operacion.md) |
+| Diagrama del flujo de telemetría | [`docs/diagramas/flujo-telemetria.md`](docs/diagramas/flujo-telemetria.md) |
+| Preguntas teóricas (preparación) | [`docs/preguntas-teoricas.md`](docs/preguntas-teoricas.md) |
+| Guion del video | [`docs/guion-video.md`](docs/guion-video.md) |
+
+## Pendiente del estudiante
+
+- [ ] Grabar el video siguiendo [`docs/guion-video.md`](docs/guion-video.md) y pegar la URL y el minutaje en la tabla 4.1.
+- [ ] Dar al secret `GITOPS_PAT` el permiso *Pull requests: write* sobre `sa-platform-gitops`. Sin él, el último paso del pipeline (abrir el PR de bump) falla y el PR se abre a mano.

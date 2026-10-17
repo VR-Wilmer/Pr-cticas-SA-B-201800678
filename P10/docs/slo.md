@@ -105,9 +105,9 @@ Multi-ventana y multi-tasa (*SRE Workbook*, cap. 5). La tasa de consumo
 | Alerta | Condición | Gasta | Severidad | Por qué amerita intervención |
 |---|---|---|---|---|
 | `SLODisponibilidadConsumoRapidoPresupuesto` | burn > 14.4 en 1 h **y** en 5 min | 2 % del presupuesto mensual por hora; se agota en ~2 días | `page` | Los clientes reciben errores **ahora** (> 7.2 % de las peticiones) |
-| `SLODisponibilidadConsumoSostenidoPresupuesto` | burn > 6 en 6 h **y** en 30 min | se agota en ~5 días | `ticket` | Degradación persistente que la alerta rápida no ve |
+| `SLODisponibilidadConsumoSostenidoPresupuesto` | burn > 6 en 6 h, 30 min **y** 5 min | se agota en ~5 días | `ticket` | Degradación persistente que la alerta rápida no ve. El 5 min se agregó tras el fallo B: sin él la alerta disparó 12 min **después** de la recuperación |
 | `SLOLatenciaConsumoRapidoPresupuesto` | burn > 14.4 en 1 h **y** en 5 min | idem | `page` | Más del 14.4 % de las peticiones tarda > 1 s; antesala de una caída |
-| `SLOLatenciaConsumoSostenidoPresupuesto` | burn > 6 en 6 h **y** en 30 min | idem | `ticket` | Lentitud crónica (datos que crecen, límites de CPU justos) |
+| `SLOLatenciaConsumoSostenidoPresupuesto` | burn > 6 en 6 h, 30 min **y** 5 min | idem | `ticket` | Lentitud crónica (datos que crecen, límites de CPU justos) |
 
 - La **ventana corta** confirma que el problema sigue ocurriendo y hace que
   la alerta se resuelva pocos minutos después de mitigar (la ventana larga
