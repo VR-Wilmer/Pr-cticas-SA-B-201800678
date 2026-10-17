@@ -1,0 +1,33 @@
+# Cluster kind local "sa-p10" (Practica 10). Misma receta que
+# P8/ci/kind-config.yaml (puertos 80/443 del control-plane mapeados al host
+# para el Ingress), mas los 2 nodos worker que introdujo la Practica 9:
+# tickets-service y gateway declaran anti-afinidad "required" con 2
+# replicas (sa-platform-gitops, charts/common/templates/_workload.tpl), asi
+# que sin 2 workers una de sus replicas quedaria Pending para siempre.
+#
+# Practica 10: un TERCER worker. Durante el canary Argo Rollouts (sin
+# traffic router, peso por proporcion de replicas) levanta el pod canario
+# ANTES de bajar uno estable: 2 estables + 1 canario = 3 pods con
+# anti-afinidad "required" -> con solo 2 workers el canario queda Pending
+# y el AnalysisRun por metricas nunca tendria trafico que medir.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: sa-p10
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+  - role: worker
+  - role: worker
+  - role: worker

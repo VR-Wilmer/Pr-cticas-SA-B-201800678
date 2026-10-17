@@ -1,3 +1,4 @@
+import { httpObservability } from "./observability/httpMetrics";
 import express, { Application } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -26,6 +27,8 @@ export interface BuiltApp {
 
 export async function buildApp(): Promise<BuiltApp> {
   const app = express();
+  // Practica 10: metrica de latencia/errores + registro de acceso JSON por peticion.
+  app.use(httpObservability());
 
   const notificacionRepository = new PostgresNotificacionRepository(pool);
   const emailSender = new ConsoleEmailSender();

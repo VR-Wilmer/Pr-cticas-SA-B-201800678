@@ -20,6 +20,11 @@ export function toGraphQLError(err: unknown): GraphQLError {
   if (err instanceof DomainError) {
     return new GraphQLError(err.message, { extensions: { code: err.name, http: { status: err.statusCode } } });
   }
-  console.error(err);
-  return new GraphQLError("Error interno del servidor", { extensions: { code: "INTERNAL_SERVER_ERROR" } });
+  console.error("Error interno no controlado", err);
+  // Practica 10: http.status 500 explicito. Sin el, Apollo responde 200 con
+  // "errors" en el cuerpo y un fallo real del servidor seria invisible para
+  // las metricas HTTP (tasa de error del canary, SLO, tablero).
+  return new GraphQLError("Error interno del servidor", {
+    extensions: { code: "INTERNAL_SERVER_ERROR", http: { status: 500 } },
+  });
 }

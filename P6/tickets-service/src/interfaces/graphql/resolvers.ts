@@ -5,6 +5,8 @@ import { ActualizarEstadoTicketUseCase } from "../../application/use-cases/Actua
 import { CategoriaTicket, EstadoTicket } from "../../domain/entities/Ticket";
 import { GraphQLContext } from "./context";
 import { requireToken, toGraphQLError } from "./errors";
+import { ticketsCreados, ticketsCreacionFallida, ticketsSinAgente } from "../../observability/businessMetrics";
+import { DomainError } from "../../domain/errors/DomainError";
 
 export interface TicketUseCases {
   crearTicket: CrearTicketUseCase;
@@ -44,8 +46,16 @@ export function buildResolvers(useCases: TicketUseCases) {
       ) => {
         try {
           const token = requireToken(context.token);
-          return await useCases.crearTicket.execute(token, args);
+          const ticket = await useCases.crearTicket.execute(token, args);
+          ticketsCreados.add(1, { categoria: ticket.categoria });
+          if (!ticket.agenteId) ticketsSinAgente.add(1, { categoria: ticket.categoria });
+          return ticket;
         } catch (err) {
+          // "motivo" distingue rechazos esperados (token ausente/rol invalido,
+          // errores de dominio 4xx) de fallos del sistema (error_interno): solo
+          // estos ultimos consumen presupuesto de error del SLO.
+          const motivo = err instanceof DomainError ? err.name : "error_interno";
+          ticketsCreacionFallida.add(1, { categoria: args.categoria, motivo });
           throw toGraphQLError(err);
         }
       },

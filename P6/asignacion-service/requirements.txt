@@ -9,3 +9,13 @@ sqlalchemy==2.0.34
 psycopg2-binary==2.9.9
 python-dotenv==1.0.1
 pydantic==2.9.2
+# Practica 10 (observabilidad): SDK de OpenTelemetry, exportador OTLP de
+# trazas hacia el Collector, instrumentacion automatica de FastAPI/SQLAlchemy
+# y endpoint Prometheus del SDK. Versiones fijadas juntas: los paquetes
+# "instrumentation-*" 0.66b1 corresponden al SDK 1.45.1.
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1
+opentelemetry-exporter-prometheus==0.66b1
+opentelemetry-instrumentation-fastapi==0.66b1
+opentelemetry-instrumentation-sqlalchemy==0.66b1
+prometheus_client==0.26.0

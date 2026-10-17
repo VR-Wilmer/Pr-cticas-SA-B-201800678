@@ -1,2 +1,3 @@
 allowBuilds:
   '@scarf/scarf': false
+  protobufjs: false

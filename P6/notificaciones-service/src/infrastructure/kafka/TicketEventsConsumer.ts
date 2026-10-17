@@ -1,6 +1,17 @@
 import { Kafka, Consumer } from "kafkajs";
 import { RegistrarNotificacionUseCase } from "../../application/use-cases/RegistrarNotificacionUseCase";
 import { TipoNotificacion } from "../../domain/entities/Notificacion";
+import { metrics } from "@opentelemetry/api";
+
+// Practica 10, metrica de negocio: notificaciones entregadas al cliente por
+// tipo y estado de envio. Es el extremo final del flujo asincrono: si
+// tickets_creados_total sube y esta no, los clientes no se estan enterando
+// de sus tickets aunque la API responda bien.
+const notificacionesProcesadas = metrics
+  .getMeter("sa-platform-negocio")
+  .createCounter("notificaciones_procesadas", {
+    description: "Eventos de ticket convertidos en notificacion, por tipo y estado de envio",
+  });
 
 interface TicketEventoPayload {
   ticketId: string;
@@ -50,16 +61,18 @@ export class TicketEventsConsumer {
 
         const evento: TicketEventoPayload = JSON.parse(message.value.toString());
         try {
-          await this.registrarNotificacion.execute(
+          const notificacion = await this.registrarNotificacion.execute(
             evento.secretoInterno,
             evento.ticketId,
             evento.destinatario,
             evento.tipo
           );
+          notificacionesProcesadas.add(1, { tipo: notificacion.tipo, estado_envio: notificacion.estadoEnvio });
           await this.consumer.commitOffsets([
             { topic, partition, offset: (Number(message.offset) + 1).toString() },
           ]);
         } catch (err) {
+          notificacionesProcesadas.add(1, { tipo: evento.tipo, estado_envio: "ERROR" });
           console.error(
             `No se pudo procesar el evento de notificacion del ticket ${evento.ticketId} (offset ${message.offset}), no se confirma -- se reintentara:`,
             err

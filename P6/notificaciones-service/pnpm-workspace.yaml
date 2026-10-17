@@ -1,2 +1,3 @@
 allowBuilds:
   '@apollo/protobufjs': false
+  protobufjs: false

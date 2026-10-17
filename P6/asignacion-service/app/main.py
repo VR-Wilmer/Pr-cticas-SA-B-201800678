@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 
-from app.infrastructure.database import SessionLocal
+from app.infrastructure.database import SessionLocal, engine
 from app.infrastructure.repositories import SqlAlchemyAgenteRepository
 from app.infrastructure.seed import seed_agentes
 from app.interfaces.routers import router
+from app.observability import configurar_telemetria, registrar_middleware_http
 
 # Composition root: unico lugar donde se conecta la implementacion concreta del
 # repositorio (SqlAlchemyAgenteRepository) con los casos de uso, igual que
@@ -19,6 +20,10 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+# Practica 10: trazas, metricas y registros JSON (ver app/observability.py).
+configurar_telemetria(app, engine)
+registrar_middleware_http(app)
 
 app.include_router(router)
 

@@ -4,7 +4,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 RUN npm install -g pnpm@11.18.0
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
@@ -15,7 +15,7 @@ FROM node:22-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
 RUN npm install -g pnpm@11.18.0
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 # npm/npx no se necesitan en runtime (solo "node dist/...") -- se elimina
 # el CLI completo de npm, incluyendo su propio node-tar vendorizado
 # (CVE-2026-59873, node-tar DoS via gzip bomb), en vez de solo desinstalar
