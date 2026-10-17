@@ -135,6 +135,28 @@ es el mismo script con **solo** ese cambio en 8 líneas
 (`:-{}}` → `:-"{}"}`). Se puede comprobar con
 `diff verificar_p10.sh verificacion/verificar_p10_corregido.sh`.
 
+### Segundo comportamiento frágil del script: sección 2.4 (orígenes de Grafana)
+
+La comprobación hace, con `set -o pipefail`:
+`DS=$(kubectl get cm -n observabilidad -o yaml)` y luego
+`echo "$DS" | grep -qi "type: *loki"`. `grep -q` termina en cuanto
+encuentra el texto. Si el YAML de los ConfigMaps del namespace supera el
+buffer del pipe (64 KB), `echo` recibe SIGPIPE (código 141) y `pipefail`
+convierte el acierto en FALLA, aunque Grafana tenga los tres orígenes
+(Prometheus, Loki y Tempo; se ve en `kps-grafana-datasource`). Se observó
+con 78 KB. Para no depender de eso, el tablero se guarda en el ConfigMap
+como JSON compacto (38 KB → 20 KB). Así el namespace queda en ~58 KB y la
+comprobación pasa con el script **oficial** sin modificarlo. El archivo
+exportado [`dashboards/tablero-operacion.json`](dashboards/tablero-operacion.json)
+sigue legible.
+
+### Resultado medido (clúster `sa-p10`, 2026-10-17)
+
+| Script | Conocimiento | Eliminatorios |
+|---|---|---|
+| `verificar_p10.sh` (oficial) | 45/60: pierde 2.2 y 2.3 solo por el bug `${VAR:-{}}` | `analisis-sin-prometheus` (falso, por el mismo bug) |
+| `verificacion/verificar_p10_corregido.sh` | 60/60 | ninguno |
+
 ## Pendientes
 
 - [ ] Fallo inducido B y recorrido cronometrado alerta → traza → registro (`docs/evidencia/sintoma-a-causa.md`).
