@@ -1,4 +1,17 @@
+import { Agent } from "undici";
+
 const TIMEOUT_MS = 3000;
+
+// Practica 10: rotar la conexion keep-alive cada N peticiones. Un Service de
+// Kubernetes balancea por CONEXION (L4), no por peticion, y fetch reutiliza
+// la misma conexion TCP indefinidamente mientras haya trafico: cada pod
+// cliente quedaba "anclado" a un unico pod destino. Consecuencia observada:
+// durante el canary de asignacion-service el pod de la version candidata
+// recibio 0 peticiones por minutos (las conexiones de tickets-service
+// apuntaban al estable) y el AnalysisRun fallo por falta de trafico
+// (metrica trafico-canary). Con una conexion nueva cada 25 peticiones,
+// kube-proxy vuelve a repartir y el peso del canary se cumple.
+const dispatcher = new Agent({ maxRequestsPerClient: 25, keepAliveTimeout: 4000 });
 
 // Mismo helper que en tickets-service (no hay paquete compartido entre
 // microservicios, ver nota en IIdentidadServiceClient.ts).
@@ -31,6 +44,8 @@ export class RetryableFetcher {
 
     try {
       const respuesta = await fetch(url, {
+        // @ts-expect-error -- "dispatcher" es una extension de undici, no esta en el RequestInit de lib.dom
+        dispatcher,
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(body),

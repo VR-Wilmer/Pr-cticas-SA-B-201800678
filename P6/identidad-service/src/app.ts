@@ -1,3 +1,4 @@
+import { httpObservability } from "./observability/httpMetrics";
 import express, { Application } from "express";
 import { env } from "./config/env";
 import { pool } from "./infrastructure/database/PostgresConnection";
@@ -20,6 +21,8 @@ import { RolUsuario } from "./domain/entities/Usuario";
 // (infraestructura) con las abstracciones que consume la capa de aplicacion (DIP).
 export async function buildApp(): Promise<Application> {
   const app = express();
+  // Practica 10: metrica de latencia/errores + registro de acceso JSON por peticion.
+  app.use(httpObservability());
   app.use(express.json({ limit: "10kb" }));
 
   const passwordHasher = new BcryptPasswordHasher();

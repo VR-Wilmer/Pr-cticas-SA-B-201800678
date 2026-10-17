@@ -1,3 +1,4 @@
+import { httpObservability } from "./observability/httpMetrics";
 import express, { Application } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -6,6 +7,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { env } from "./config/env";
 import { pool } from "./infrastructure/database/PostgresConnection";
 import { PostgresTicketRepository } from "./infrastructure/repositories/PostgresTicketRepository";
+import { LatenciaInducidaTicketRepository } from "./infrastructure/repositories/LatenciaInducidaTicketRepository";
 import { RetryableFetcher } from "./infrastructure/http/RetryableFetcher";
 import { IdentidadServiceClient } from "./infrastructure/http/IdentidadServiceClient";
 import { AsignacionServiceClient } from "./infrastructure/http/AsignacionServiceClient";
@@ -23,8 +25,17 @@ import { buildContext, GraphQLContext } from "./interfaces/graphql/context";
 // aplicacion (DIP), igual que app.ts en identidad-service.
 export async function buildApp(): Promise<Application> {
   const app = express();
+  // Practica 10: metrica de latencia/errores + registro de acceso JSON por peticion.
+  app.use(httpObservability());
 
-  const ticketRepository = new PostgresTicketRepository(pool);
+  const repositorioReal = new PostgresTicketRepository(pool);
+  const ticketRepository =
+    env.FALLO_LATENCIA_MS > 0
+      ? new LatenciaInducidaTicketRepository(repositorioReal, env.FALLO_LATENCIA_MS)
+      : repositorioReal;
+  if (env.FALLO_LATENCIA_MS > 0) {
+    console.warn(`FALLO INDUCIDO ACTIVO: +${env.FALLO_LATENCIA_MS}ms en cada creacion de ticket`);
+  }
   const authzFetcher = new RetryableFetcher(env.AUTHZ_MAX_RETRIES, env.AUTHZ_RETRY_BACKOFF_MS);
   const identidadServiceClient = new IdentidadServiceClient(env.AUTHZ_SERVICE_URL, authzFetcher);
   const asignacionServiceClient = new AsignacionServiceClient(

@@ -27,4 +27,7 @@ export const env = {
   KAFKA_BROKERS: required("KAFKA_BROKERS").split(","),
   KAFKA_CLIENT_ID: process.env.KAFKA_CLIENT_ID ?? "tickets-service",
   KAFKA_TICKET_EVENTS_TOPIC: required("KAFKA_TICKET_EVENTS_TOPIC"),
+  // Practica 10: fallo inducido para demostrar la reversion del canary por
+  // metricas (ver LatenciaInducidaTicketRepository). 0 = desactivado.
+  FALLO_LATENCIA_MS: Number(process.env.FALLO_LATENCIA_MS ?? 0),
 };
