@@ -1,3 +1,7 @@
 allowBuilds:
   '@apollo/protobufjs': false
   protobufjs: false
+# Practica 10: CVE-2026-90711 (proxy-addr < 2.0.8, IP spoofing), transitiva
+# de express. Trivy la bloqueo en el pipeline; se fuerza la version corregida.
+overrides:
+  proxy-addr: "^2.0.8"
