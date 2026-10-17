@@ -263,7 +263,12 @@ if __name__ == "__main__":
     (aqui / "tablero-operacion.json").write_text(contenido + "\n", encoding="utf-8")
     if len(sys.argv) > 1:
         cm = Path(sys.argv[1]) / "observabilidad" / "manifests" / "grafana-dashboard-operacion.yaml"
-        cuerpo = "\n".join("    " + l for l in contenido.split("\n"))
+        # JSON compacto en el ConfigMap (el archivo exportado de arriba queda
+        # legible): verificar_p10.sh hace `echo "$(kubectl get cm -o yaml)" |
+        # grep -q` con pipefail, y si el YAML de los ConfigMaps del namespace
+        # supera el buffer del pipe (64 KB) el SIGPIPE de echo convierte un
+        # acierto de grep en FALLA (seccion 2.4, ver README).
+        cuerpo = "    " + json.dumps(tablero, ensure_ascii=False, separators=(",", ":"))
         cm.write_text(
             "# GENERADO por P10/dashboards/generar_tablero.py (repo de codigo) -- no editar a mano.\n"
             "# El sidecar de Grafana carga todo ConfigMap con grafana_dashboard=1.\n"
