@@ -70,7 +70,7 @@ Ver `docs/preguntas-teoricas.md`.
 | Backend remoto de Terraform | S3 (MinIO local, fuera del clúster), bucket `tfstate-p9`, bloqueo nativo S3 (`use_lockfile`) — endpoint `http://localhost:9000` |
 | Schedule de Velero | `velero-sa-platform-daily` (cron `0 3 * * *`, retención 7 días; namespaces `sa-p8-staging`, `sa-p8-prod` y `sealed-secrets`) — destino: bucket `velero-backups-p9` en MinIO local |
 | Reconstrucción cronometrada | `docs/evidencia/reconstrucciones.log` (crudo) y `docs/evidencia/fase7-reconstruccion.md` (narrado) |
-| Restauración de datos | `docs/evidencia/fase6-restauracion-datos.md` — ticket real recuperado con id/contenido idénticos |
+| Restauración de datos | `docs/evidencia/fase6-restauracion-datos.md` — ticket real recuperado con id/contenido idénticos; re-verificada sobre el clúster actual en `docs/evidencia/fase8-reverificacion-restauracion.md` (`Restore` `p9-restore-check`) |
 | Prueba de pérdida de nodo | `docs/evidencia/fase4-resiliencia.md` — 168/168 peticiones HTTP 200 durante el drenaje |
 | RTO y RPO declarados | Ver `docs/informe-prueba-dr.md`, sección 1: RTO ≤ 20 min, RPO ≤ 24 h |
 | RTO y RPO medidos | RTO real: 10m35s (635s). RPO real: 1m38s. Ver `docs/informe-prueba-dr.md`, secciones 3-4 |

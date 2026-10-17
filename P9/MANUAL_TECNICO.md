@@ -168,6 +168,13 @@ Cambios hechos a partir de la primera corrida (2026-10-17):
 | Aplicaciones `Degraded` (no lo mide el script, pero sí el bootstrap) | `main` del repo GitOps siguió con la Práctica 10: AnalysisTemplate contra un Prometheus que `sa-p9` no tiene, y `SealedSecret` re-sellados con la llave de `sa-p10` (14/16 sin poder descifrarse en `sa-p9`; una reconstrucción desde `main` nunca habría quedado `Healthy`) | `sa-p9` fijo a la rama **`p9`** del repo GitOps (`gitops_revision`), creada desde el último commit de P9 |
 | Canary de `gateway`/`tickets-service` en `Pending` | Anti-afinidad `required` + 2 workers: el pod extra del canary no cabía en ningún nodo | `topologySpreadConstraints` (`maxSkew: 1`, `DoNotSchedule`, `nodeTaintsPolicy: Honor`): misma garantía de 1 pod por nodo con 2 réplicas, y sí admite el 3er pod |
 
+Después de esos cambios (2026-10-17): migración única de los pods
+estables que aún tenían la anti-afinidad vieja (se borró uno por
+Rollout para que el canary entrara, y luego uno por par para repartirlos
+en los 2 workers), las tres `Application` en `Synced`/`Healthy`, y
+restauración re-verificada en un namespace aislado
+(`docs/evidencia/fase8-reverificacion-restauracion.md`).
+
 **Bug del propio script (no es de la entrega).** En las secciones 2.3,
 2.4 y 2.6, el script hace `echo "${SCHED:-{}}"`. Bash interpreta eso como
 `${SCHED:-{}` seguido de una `}` literal, así que el JSON llega a `jq`
